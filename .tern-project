@@ -1,0 +1,9 @@
+{
+  "libs": [
+    "browser",
+    "jquery"
+  ],
+  "loadEagerly": ["*.js", "*/*.js", "*/*/*.js", "*/*/*/*.js"],
+  "plugins": {
+  }
+}

@@ -1,0 +1,7 @@
+To Do:
+
+
+
+Ideas:
+- Use the technique from http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/ to construct
+    a high resolution display image from a low-resolution simulation space

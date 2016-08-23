@@ -1,0 +1,13 @@
+
+Links:
+http://www.karlsims.com/rd.html
+http://mrob.com/pub/comp/xmorphia/
+http://mrob.com/pub/comp/xmorphia/pearson-classes.html
+http://blog.hvidtfeldts.net/index.php/2012/08/reaction-diffusion-systems/
+http://www.algosome.com/articles/reaction-diffusion-gray-scott.html
+http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+http://http.developer.nvidia.com/GPUGems/gpugems_ch38.html
+http://stackoverflow.com/questions/12469990/simple-glsl-convolution-shader-is-atrociously-slow
+https://www.reddit.com/r/proceduralgeneration/comments/4xz99n/reactiondiffusion_simulation_ive_made_in/d6kjywf
+http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/
+http://xissburg.com/faster-gaussian-blur-in-glsl/

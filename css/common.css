@@ -1,0 +1,32 @@
+body {
+    background-color: #1c1c1c;
+    margin: 0px;
+    overflow: hidden;
+    font-family:Monospace;
+    font-size:13px;
+    text-align:center;
+    text-align:center;
+}
+
+a {
+    color:#00b8ff;
+}
+
+#info {
+    color: #ffffff;
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    background-color:rgba(0, 0, 0, 0.71);
+}
+
+#reaction-diffusion-container {
+    width: 512px;
+    height: 750px;
+    display: block;
+    margin: auto;
+    margin-top: 50px;
+    background: rgb(186, 255, 155);
+/*    border: 1px;*/
+/*    border-color: white;*/
+}
