@@ -49,36 +49,23 @@ vec4 laplace(vec2 uv, vec2 offset){
 }
 
 //http://theorangeduck.com/page/avoiding-shader-conditionals
-vec4 when_eq(vec4 x, vec4 y) {
+float when_eq(float x, float y) {
   return 1.0 - abs(sign(x - y));
 }
-
-vec4 when_neq(vec4 x, vec4 y) {
+float when_neq(float x, float y) {
   return abs(sign(x - y));
 }
-
-vec4 when_gt(vec4 x, vec4 y) {
-  return max(sign(x - y), 0.0);
-}
-
-vec4 when_lt(vec4 x, vec4 y) {
-  return max(sign(y - x), 0.0);
-}
-
-vec4 when_ge(vec4 x, vec4 y) {
-  return 1.0 - when_lt(x, y);
-}
-
-vec4 when_le(vec4 x, vec4 y) {
-  return 1.0 - when_gt(x, y);
-}
-
 float when_gt(float x, float y) {
   return max(sign(x - y), 0.0);
 }
-
 float when_lt(float x, float y) {
   return max(sign(y - x), 0.0);
+}
+float when_le(float x, float y) {
+  return 1.0 - max(sign(x - y), 0.0);
+}
+float when_ge(float x, float y) {
+  return 1.0 - max(sign(y - x), 0.0);
 }
 
 void main() {
@@ -134,12 +121,14 @@ void main() {
     float dist = distance(uv / cellSize, interactPos);
 
     //if dist < dropperSize return 0, else return 1
-    float distBranch = clamp(sign(dropperSize - dist), 0.0, 1.0);
+    //float distBranch = clamp(sign(dropperSize - dist), 0.0, 1.0);
+    float distBranch = when_gt(dropperSize, dist);
     //if distBranch == 0 keep original value, otherwise assign droppedValue
     newB = mix(finalB, droppedValue, distBranch);
 
     //if mousePos is < 0 return 0, else return 1
-    float mouseBranch = clamp(sign(interactPos.x), 0.0, 1.0);
+    //float mouseBranch = clamp(sign(interactPos.x), 0.0, 1.0);
+    float mouseBranch = when_ge(interactPos.x, 0.0);
     //if mouseBranch == 0 keep finalB as original value, otherwise set finalB to newB
     finalB = mix(finalB, newB, mouseBranch);
 
