@@ -30,10 +30,10 @@ float when_ge(float x, float y) {
 }
 
 void main() {
-    bool useHighPass = false;
-    vec2 cellSize = 1.0 / resolution.xy;
-    vec2 uv = gl_FragCoord.xy * cellSize;
+    vec2 texelSize = 1.0 / resolution.xy;
+    vec2 uv = gl_FragCoord.xy * texelSize;
     vec4 pixel = texture2D( displayTexture, uv );
+    bool useHighPass = false;
 
     //// Determine final color
 

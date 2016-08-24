@@ -70,10 +70,10 @@ float when_ge(float x, float y) {
 
 void main() {
 
-    vec2 cellSize = 1.0 / resolution.xy;
-    vec2 uv = gl_FragCoord.xy * cellSize;
+    vec2 texelSize = 1.0 / resolution.xy;
+    vec2 uv = gl_FragCoord.xy * texelSize;
     vec4 pixel = texture2D( chemicalTexture, uv );
-    vec2 offset = cellSize * 1.0; //Change the multiplier for fun times
+    vec2 offset = texelSize * 1.0; //Change the multiplier for fun times
 
 
     //// Perform Laplace convolution
@@ -106,8 +106,8 @@ void main() {
     // Only applies color if the pixels are <=
 
 //    if(mousePos.x >= 0.0) {
-//        vec2 diff = (uv - mousePos) / cellSize;
-//        //vec2 diff = uv - (interactPos * cellSize);
+//        vec2 diff = (uv - mousePos) / texelSize;
+//        //vec2 diff = uv - (interactPos * texelSize);
 //        //vec2 diff = uv - mousePos;
 //        //vec2 diff =
 //
@@ -118,7 +118,7 @@ void main() {
 
     float newB = 0.0;
     float droppedValue = 0.55; //Value placed within circle
-    float dist = distance(uv / cellSize, interactPos);
+    float dist = distance(uv / texelSize, interactPos);
 
     //if dist < dropperSize return 0, else return 1
     //float distBranch = clamp(sign(dropperSize - dist), 0.0, 1.0);
