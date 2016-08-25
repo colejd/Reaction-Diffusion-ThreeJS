@@ -1,7 +1,8 @@
 #include <common>
 
-uniform sampler2D displayTexture;
+varying vec2 vUv;
 
+uniform sampler2D displayTexture;
 uniform float time;
 uniform vec2 resolution;
 
@@ -31,7 +32,8 @@ float when_ge(float x, float y) {
 
 void main() {
     vec2 texelSize = 1.0 / resolution.xy;
-    vec2 uv = gl_FragCoord.xy * texelSize;
+    //vec2 uv = gl_FragCoord.xy * texelSize;
+    vec2 uv = vUv;
     vec4 pixel = texture2D( displayTexture, uv );
     bool useHighPass = false;
 
@@ -51,13 +53,13 @@ void main() {
 
     vec4 finalColor = vec4(c, c, c, 1.0);
 
-    //Static effect on blue pixels for no reason
-    float noise = rando(uv.xy * time);
-    //add noise value to c if pixel.b > 0
-    float blueBranch = when_gt(pixel.b, 0.0);
-    float newC = mix(c, c + noise, blueBranch);
-    finalColor = vec4(newC, newC, newC, 1.0);
-    //clamp between 0 and 1?
+//    //Static effect on blue pixels for no reason
+//    float noise = rando(uv.xy * time);
+//    //add noise value to c if pixel.b > 0
+//    float blueBranch = when_gt(pixel.b, 0.0);
+//    float newC = mix(c, c + noise, blueBranch);
+//    finalColor = vec4(newC, newC, newC, 1.0);
+//    //clamp between 0 and 1?
 
 
     //Apply the final color

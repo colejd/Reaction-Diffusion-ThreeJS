@@ -4,29 +4,38 @@
 var THREE;
 
 var container, stats;
+var $container;
 var camera, scene, renderer, planeMesh;
 var frustumSize = 1;
-var planeMaterial;
-
-var gpuCompute;
-var computeVariable;
-var planeMaterialUniforms;
 
 var display_vert_source;
 var display_frag_source;
 var compute_frag_source;
 
-var computeStepsPerFrame = 8;
-var internalResolutionMultiplier = 1.0;
+var planeMesh;
+var planeMaterial;
+var planeMaterialUniforms;
+
+var computeRenderTargets = [];
+var computeMaterial;
+var computeUniforms;
+
+var passThroughMaterial;
+var passThroughUniforms;
+
+var computeStepsPerFrame;
+var currentTargetIndex = 0;
+
+var internalResolutionMultiplier = 0.5;
 var internalWidth;
 var internalHeight;
 
 var startTime = Date.now();
 
-var rdTexture;
-
 var mousePos = new THREE.Vector2();
 var mouseIsDown = false;
+
+var filterType = THREE.LinearFilter; //THREE.NearestFilter
 
 var presets = [
     {
@@ -66,7 +75,10 @@ var presets = [
 
 function setup() {
     //Find the container
-    container = document.getElementById('reaction-diffusion-container');
+    $container = $("#reaction-diffusion-container");
+    container = $container.get(0);
+
+    //container = document.getElementById('reaction-diffusion-container');
     //document.body.appendChild( container );
 
     //Early out if we don't have WebGL
@@ -79,26 +91,6 @@ function setup() {
         display_frag_source = shaderText[1];
         compute_frag_source = shaderText[2];
 
-        planeMaterialUniforms = {
-            time: {
-                type: "f",
-                value: 1.0
-            },
-            resolution: {
-                type: "v2",
-                value: new THREE.Vector2()
-            },
-            displayTexture: {
-                value: null
-            } //texture: { type: "t", value: makeSeedTexture() }
-        };
-
-        planeMaterial = new THREE.ShaderMaterial({
-            uniforms: planeMaterialUniforms,
-            vertexShader: display_vert_source,
-            fragmentShader: display_frag_source
-        });
-
         //Run the rest of the program
         init();
     }, function (url) {
@@ -109,31 +101,38 @@ function setup() {
 function init() {
 
     //Set up renderer and embed in HTML
-    renderer = new THREE.WebGLRenderer({ premultipliedAlpha : false });
+    renderer = new THREE.WebGLRenderer({ premultipliedAlpha : false, preserveDrawingBuffer: true });
     renderer.setSize(container.offsetWidth, container.offsetHeight);
-    renderer.setClearColor(0xf0f000, 1);
+    renderer.setClearColor(0x00ffff, 1); //Cyan clear color
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    //Set the resolution of the display shader, minding that it is screen space and is affected by the device pixel ratio.
-    planeMaterialUniforms.resolution.value.x = renderer.getSize().width * renderer.getPixelRatio();
-    planeMaterialUniforms.resolution.value.y = renderer.getSize().height * renderer.getPixelRatio();
+    if ( ! renderer.extensions.get( "OES_texture_float" ) ) {
+        console.log("No OES_texture_float support for float textures.");
+    }
 
-    console.log("Set screen space resolution to (" + planeMaterialUniforms.resolution.value.x + ", " + planeMaterialUniforms.resolution.value.y + ")");
+    if ( renderer.capabilities.maxVertexTextures === 0 ) {
+        console.log("No support for vertex shader textures.");
+    }
+
+    //Set the resolution of the display shader, minding that it is screen space and is affected by the device pixel ratio.
+
+    //computeUniforms.resolution.value.x = renderer.getSize().width;
+    //computeUniforms.resolution.value.y = renderer.getSize().height;
 
     internalWidth = renderer.getSize().width;
     internalHeight = renderer.getSize().height;
 
-    scene = new THREE.Scene();
+    initMaterials();
 
-    var aspect = renderer.getSize().width / renderer.getSize().height;
+    scene = new THREE.Scene();
     var planeSize = 1.0;
 
     //camera = new THREE.PerspectiveCamera( 50, container.offsetWidth / container.offsetHeight, 1, 1000 );
-    camera = new THREE.OrthographicCamera(planeSize * frustumSize * aspect / -2,
-        planeSize * frustumSize * aspect / 2,
-        planeSize * frustumSize / 2,
-        planeSize * frustumSize / -2,
+    camera = new THREE.OrthographicCamera(-0.5,
+        0.5,
+        0.5,
+        -0.5,
         150, 1000);
     camera.position.y = 0;
     camera.position.z = 500;
@@ -141,29 +140,16 @@ function init() {
 
     //var testMaterial = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
 
-    var planeGeometry = new THREE.Geometry();
-    planeGeometry.vertices.push(new THREE.Vector3(-planeSize * aspect / 2, -planeSize / 2, 0));
-    planeGeometry.vertices.push(new THREE.Vector3(planeSize * aspect / 2, -planeSize / 2, 0));
-    planeGeometry.vertices.push(new THREE.Vector3(planeSize * aspect / 2, planeSize / 2, 0));
-    planeGeometry.vertices.push(new THREE.Vector3(-planeSize * aspect / 2, planeSize / 2, 0));
-    //Push triangles
-    planeGeometry.faces.push(new THREE.Face3(0, 1, 2));
-    planeGeometry.faces.push(new THREE.Face3(0, 2, 3));
-    //Construct and add mesh
-    var planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-    planeMesh.dynamic = true;
-    scene.add(planeMesh);
+    //Make plane primitive
+    var planeGeometry = new THREE.PlaneGeometry(1.0, 1.0);
 
-    //planeMesh.material.wireframe = true;
-    //planeMesh.material.needsUpdate = true;
+    planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    scene.add(planeMesh);
 
     //Add a wireframe to help see the borders of the mesh
     //var helper = new THREE.WireframeHelper(planeMesh);
     //helper.material.color.set(0xff0000);
     //scene.add( helper );
-
-    //Set up compute shaders
-    initCompute();
 
     //Set up GUI
     initGUI();
@@ -176,42 +162,139 @@ function init() {
     stats = new Stats();
     container.appendChild(stats.dom);
 
-    animate();
+    resize(container.clientWidth, container.clientHeight);
+
+    //seedCircle(texture1, 256, 256, 200, 50);
+    console.log(planeMaterial);
+    console.log(computeMaterial);
+
+    seedRenderTarget(computeRenderTargets[0]);
+
+    //animate();
+    //doRenderPass(0);
+    //requestAnimationFrame(render); //Add to increase FPS to 120
+    renderLoop();
 }
 
-function initCompute() {
+function initMaterials(){
+    planeMaterialUniforms = {
+        time: { type: "f", value: 1.0 },
+        resolution: { type: "v2", value: new THREE.Vector2() },
+        displayTexture: { value: null }
+    };
 
-    gpuCompute = new GPUComputationRenderer(internalWidth, internalHeight, renderer); //use power of 2 textures instead?
+    planeMaterial = new THREE.ShaderMaterial({
+        uniforms: planeMaterialUniforms,
+        vertexShader: display_vert_source,
+        fragmentShader: display_frag_source
+    });
+    planeMaterial.blending = THREE.NoBlending;
 
-    //Make the texture
-    rdTexture = gpuCompute.createTexture();
-    prepareComputeTexture(rdTexture);
-
-    //Seed the texture
-    seedCircle(rdTexture, internalWidth * 0.5, internalHeight * 0.5, Math.min(internalWidth, internalHeight) * 0.33, Math.min(internalWidth, internalHeight) * 0.125);
-    //seedFilledCircle(rdTexture, width * 0.5, height * 0.5, Math.min(width, height) * 0.25);
-    //seedSquare(rdTexture, 0, 0, 100);
-    //Add some bias in the blue channel
-    seedFilledCircle(rdTexture, internalWidth * 0.5, internalHeight * 0.5, Math.min(internalWidth, internalHeight) * 0.25, 2);
-
-    //Assign the texture
-    computeVariable = gpuCompute.addVariable("chemicalTexture", compute_frag_source, rdTexture);
-    gpuCompute.setVariableDependencies(computeVariable, [computeVariable]);
-
-    //Need to initialize uniforms here if you want to change them later
-    computeVariable.material.uniforms.time = { value: 0.0 };
-    computeVariable.material.uniforms.interactPos = { value: new THREE.Vector2( -1, -1 ) };
-    computeVariable.material.uniforms.doPass = { value: 1.0 };
-
-    //Check for completeness
-    var error = gpuCompute.init();
-    if (error !== null) {
-        console.error("Error initializing compute: " + error);
-    } else {
-        console.info("Compute initialized.");
+    computeUniforms = {
+        chemicalTexture: { type: "t", value: undefined },
+        resolution: { type: "v2", value: new THREE.Vector2() },
+        time: { type: "f", value: 1.0 },
+        d_a: { type: "f", value: 1.0 },
+        d_b: { type: "f", value: 1.0 },
+        feed: { type: "f", value: 1.0 },
+        kill: { type: "f", value: 1.0 },
+        biasStrength: { type: "f", value: 1.0 },
+        timestep: { type: "f", value: 1.0 },
+        interactPos: { type: "v2", value: new THREE.Vector2(-1, -1) },
+        doPass: { type: "f", value: 1.0 }
     }
 
+    computeMaterial = new THREE.ShaderMaterial({
+        uniforms: computeUniforms,
+        vertexShader: display_vert_source,
+        fragmentShader: compute_frag_source,
+    });
+    computeMaterial.blending = THREE.NoBlending;
+
+    passThroughUniforms = {
+		texture: { value: null }
+	};
+    passThroughMaterial = new THREE.ShaderMaterial({
+        uniforms: passThroughUniforms,
+        vertexShader: getPassThroughVertexShader(),
+        fragmentShader: getPassThroughFragmentShader()
+    });
+    passThroughMaterial.blending = THREE.NoBlending;
 }
+
+function resize(width, height) {
+    // Set the new shape of canvas.
+    $container.width(width);
+    $container.height(height);
+
+    // Get the real size of canvas.
+    var canvasWidth = $container.width();
+    var canvasHeight = $container.height();
+
+    renderer.setSize(canvasWidth, canvasHeight);
+    console.log("Renderer sized to (" + canvasWidth + ", " + canvasHeight + ")");
+
+    // TODO: Possible memory leak?
+    var primaryTarget = new THREE.WebGLRenderTarget(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier,
+                        {
+                            wrapS: THREE.ClampToEdgeWrapping,
+		                    wrapT: THREE.ClampToEdgeWrapping,
+                            minFilter: filterType,
+                            magFilter: filterType,
+                            format: THREE.RGBAFormat,
+                            type: THREE.FloatType});
+    var alternateTarget = new THREE.WebGLRenderTarget(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier,
+                        {
+                            wrapS: THREE.ClampToEdgeWrapping,
+		                    wrapT: THREE.ClampToEdgeWrapping,
+                            minFilter: filterType,
+                            magFilter: filterType,
+                            format: THREE.RGBAFormat,
+                            type: THREE.FloatType});
+
+    computeRenderTargets.push(primaryTarget);
+    computeRenderTargets.push(alternateTarget);
+
+    planeMaterialUniforms.resolution.value = new THREE.Vector2(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier);
+    console.log("Display plane sized to (" + planeMaterialUniforms.resolution.value.x + ", " + planeMaterialUniforms.resolution.value.y + ")");
+
+    computeUniforms.resolution.value = new THREE.Vector2(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier);
+    console.log("Compute texture sized to (" + computeUniforms.resolution.value.x + ", " + computeUniforms.resolution.value.y + ")");
+}
+
+//function initCompute() {
+//
+//    gpuCompute = new GPUComputationRenderer(internalWidth, internalHeight, renderer); //use power of 2 textures instead?
+//
+//    //Make the texture
+//    rdTexture = gpuCompute.createTexture();
+//    prepareComputeTexture(rdTexture);
+//
+//    //Seed the texture
+//    seedCircle(rdTexture, internalWidth * 0.5, internalHeight * 0.5, Math.min(internalWidth, internalHeight) * 0.33, Math.min(internalWidth, internalHeight) * 0.125);
+//    //seedFilledCircle(rdTexture, width * 0.5, height * 0.5, Math.min(width, height) * 0.25);
+//    //seedSquare(rdTexture, 0, 0, 100);
+//    //Add some bias in the blue channel
+//    seedFilledCircle(rdTexture, internalWidth * 0.5, internalHeight * 0.5, Math.min(internalWidth, internalHeight) * 0.25, 2);
+//
+//    //Assign the texture
+//    computeVariable = gpuCompute.addVariable("chemicalTexture", compute_frag_source, rdTexture);
+//    gpuCompute.setVariableDependencies(computeVariable, [computeVariable]);
+//
+//    //Need to initialize uniforms here if you want to change them later
+//    computeVariable.material.uniforms.time = { value: 0.0 };
+//    computeVariable.material.uniforms.interactPos = { value: new THREE.Vector2( -1, -1 ) };
+//    computeVariable.material.uniforms.doPass = { value: 1.0 };
+//
+//    //Check for completeness
+//    var error = gpuCompute.init();
+//    if (error !== null) {
+//        console.error("Error initializing compute: " + error);
+//    } else {
+//        console.info("Compute initialized.");
+//    }
+//
+//}
 
 function initGUI() {
     var computeOptions = function () {
@@ -231,14 +314,14 @@ function initGUI() {
 
     function updateValuesFromGUI() {
     //heightmapVariable.material.uniforms.erosionConstant.value = effectController.erosionConstant;
-        computeVariable.material.uniforms.timestep = { value: currentOptions.timestep };
-        computeVariable.material.uniforms.d_a = { value: currentOptions.d_a };
-        computeVariable.material.uniforms.d_b = { value: currentOptions.d_b };
-        computeVariable.material.uniforms.feed = { value: currentOptions.feed };
-        computeVariable.material.uniforms.kill = { value: currentOptions.kill };
-        computeVariable.material.uniforms.biasStrength = { value: currentOptions.biasStrength };
+        computeUniforms.timestep = { value: currentOptions.timestep };
+        computeUniforms.d_a = { value: currentOptions.d_a };
+        computeUniforms.d_b = { value: currentOptions.d_b };
+        computeUniforms.feed = { value: currentOptions.feed };
+        computeUniforms.kill = { value: currentOptions.kill };
+        computeUniforms.biasStrength = { value: currentOptions.biasStrength };
 
-        computeVariable.material.uniforms.dropperSize = { value: currentOptions.dropperSize };
+        computeUniforms.dropperSize = { value: currentOptions.dropperSize };
 
         computeStepsPerFrame = currentOptions.iterationsPerFrame;
     }
@@ -290,33 +373,66 @@ function initGUI() {
 
 }
 
-//Repeats automatically after being called the first time.
-function animate() {
-    requestAnimationFrame(animate);
+var renderLoop = function(time)
+{
 
-    for (var i = 0; i < computeStepsPerFrame; i++) {
-        gpuCompute.compute();
-    }
+    doRenderPass(time);
 
-    //Transfer the result of the compute shader to the display shader
-    planeMaterialUniforms.displayTexture.value = gpuCompute.getCurrentRenderTarget(computeVariable).texture;
-
-    render();
     stats.update();
-
+    requestAnimationFrame(renderLoop);
 }
 
-function render() {
+var doRenderPass = function(time) {
+    //    var dt = (time - mLastTime)/20.0;
+    //    if(dt > 0.8 || dt<=0)
+    //        dt = 0.8;
+    //    mLastTime = time;
+    //    mUniforms.delta.value = dt;
+
+    planeMesh.material = computeMaterial;
     var elapsedSeconds = (Date.now() - startTime) / 1000.0;
-
-    //Update display shader
     planeMaterialUniforms.time.value = 60.0 * elapsedSeconds;
+    computeUniforms.time.value = 60.0 * elapsedSeconds;
 
-    //Update compute shader
-    computeVariable.material.uniforms.time = { value: 60.0 * elapsedSeconds };
+    var output;
 
-    //Render the scene last
+    for(var i=0; i<computeStepsPerFrame; i++) {
+
+		var nextTargetIndex = currentTargetIndex === 0 ? 1 : 0;
+
+        computeUniforms.chemicalTexture.value = computeRenderTargets[currentTargetIndex].texture; //Put texture1 in
+        renderer.render(scene, camera, computeRenderTargets[nextTargetIndex], true); //Render the scene to texture2
+        computeUniforms.chemicalTexture.value = computeRenderTargets[nextTargetIndex].texture; //Put texture2 in
+        output = computeRenderTargets[nextTargetIndex].texture; //Assign to plane material
+
+        currentTargetIndex = nextTargetIndex;
+    }
+
+    planeMaterialUniforms.displayTexture.value = output;
+
+    planeMesh.material = planeMaterial;
     renderer.render(scene, camera);
+}
+
+function seedRenderTarget(renderTarget) {
+    //Make a data texture
+    var sizeX = computeUniforms.resolution.value.x;
+    var sizeY = computeUniforms.resolution.value.y;
+
+    var a = new Float32Array( sizeX * sizeY * 4 );
+    var texture = new THREE.DataTexture( a, sizeX, sizeY, THREE.RGBAFormat, THREE.FloatType );
+    texture.needsUpdate = true;
+
+    //Seed it with the variables we want
+    prepareComputeTexture(texture);
+    seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
+    seedCircle(texture, sizeX * 0.5, sizeY * 0.5, Math.min(sizeX, sizeY) * 0.33, Math.min(sizeX, sizeY) * 0.125);
+
+    //Render it to the rendertarget
+    //renderer.renderTexture( texture, renderTarget );
+    passThroughUniforms.texture.value = texture;
+    planeMesh.material = passThroughMaterial;
+    renderer.render(scene, camera, renderTarget);
 }
 
 function prepareComputeTexture(texture) {
@@ -418,19 +534,22 @@ function seedFilledCircle(texture, x, y, radius, channel = 1) {
 }
 
 function clear() {
-    computeVariable.material.uniforms.doPass.value = 0.0;
-    gpuCompute.compute();
-    computeVariable.material.uniforms.doPass.value = 1.0;
+    computeUniforms.doPass.value = 0.0;
+    doRenderPass(0);
+    doRenderPass(0);
+    computeUniforms.doPass.value = 1.0;
 }
 
 function onDocumentMouseDown( event ) {
     var rect = container.getBoundingClientRect();
     mousePos.set(event.clientX - rect.left,
                  rect.bottom - event.clientY); //(event.clientY - rect.top) to invert
+    mousePos.x *= internalResolutionMultiplier;
+    mousePos.y *= internalResolutionMultiplier;
 
     //console.log("Clicked at (" + mousePos.x + ", " + mousePos.y + ")");
 
-    computeVariable.material.uniforms.interactPos.value = mousePos;
+    computeUniforms.interactPos.value = mousePos;
 
 //    console.log("Uniforms");
 //    console.log(computeVariable.material.uniforms);
@@ -444,7 +563,7 @@ function onDocumentMouseUp( event ) {
 
     mousePos.set(-1.0, -1.0);
 
-    computeVariable.material.uniforms.interactPos.value = mousePos;
+    computeUniforms.interactPos.value = mousePos;
     mouseIsDown = false;
 }
 
@@ -454,17 +573,11 @@ function onDocumentMouseMove( event ) {
         var rect = container.getBoundingClientRect();
         mousePos.set(event.clientX - rect.left,
                      rect.bottom - event.clientY); //(event.clientY - rect.top) to invert
+        mousePos.x *= internalResolutionMultiplier;
+        mousePos.y *= internalResolutionMultiplier;
     }
 
 
-}
-
-function getPixelWidth(){
-    return renderer.getSize().width * renderer.getPixelRatio();
-}
-
-function getPixelHeight(){
-    renderer.getSize().height * renderer.getPixelRatio();
 }
 
 // LOAD  STUFF ------------------------------------------------------- //
@@ -536,4 +649,33 @@ function getSourceString(obj){
       output += property + ': ' + obj[property]+';\n';
     }
     return output;
+}
+
+function getPassThroughVertexShader() {
+
+    return	"varying vec2 vUv;\n" +
+            "void main() {\n" +
+            "   \n" +
+            "   vUv = uv;\n" +
+            //"	gl_Position = vec4( position, 1.0 );\n" +
+            "   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n" +
+            "   \n" +
+            "}\n";
+
+}
+
+function getPassThroughFragmentShader() {
+
+    return	"varying vec2 vUv;\n" +
+            "uniform sampler2D texture;\n" +
+            "\n" +
+            "void main() {\n" +
+            "\n" +
+            //"	vec2 uv = gl_FragCoord.xy / resolution.xy;\n" +
+            " vec2 uv = vUv;\n" +
+            "\n" +
+            "	gl_FragColor = texture2D( texture, uv );\n" +
+            "\n" +
+            "}\n";
+
 }

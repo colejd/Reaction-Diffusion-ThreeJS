@@ -8,8 +8,10 @@
 
 #include <common>
 
-//"resolution" is added by GPUComputationRenderer automatically
-//chemicalTexture is added automatically
+varying vec2 vUv;
+
+uniform sampler2D chemicalTexture;
+uniform vec2 resolution;
 uniform float time;
 
 uniform float d_a; //Diffusion rate of A
@@ -71,13 +73,13 @@ float when_ge(float x, float y) {
 void main() {
 
     vec2 texelSize = 1.0 / resolution.xy;
-    vec2 uv = gl_FragCoord.xy * texelSize;
+    //vec2 uv = gl_FragCoord.xy * texelSize;
+    vec2 uv = vUv;
     vec4 pixel = texture2D( chemicalTexture, uv );
-    vec2 offset = texelSize * 1.0; //Change the multiplier for fun times
+    vec2 offset = texelSize * 1.0; //Default 1.0. Change the multiplier for fun times
 
 
     //// Perform Laplace convolution
-
     vec4 laplacePixel = laplace(uv, offset);
 
 
@@ -103,19 +105,6 @@ void main() {
 
 
     //// Draw a circle around interactPos
-    // Only applies color if the pixels are <=
-
-//    if(mousePos.x >= 0.0) {
-//        vec2 diff = (uv - mousePos) / texelSize;
-//        //vec2 diff = uv - (interactPos * texelSize);
-//        //vec2 diff = uv - mousePos;
-//        //vec2 diff =
-//
-//        float dist = length(diff);
-//        if(dist < dropperSize)
-//            finalB = 0.55;
-//    }
-
     float newB = 0.0;
     float droppedValue = 0.55; //Value placed within circle
     float dist = distance(uv / texelSize, interactPos);
