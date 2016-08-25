@@ -10,7 +10,7 @@
 
 varying vec2 vUv;
 
-uniform sampler2D chemicalTexture;
+uniform sampler2D sourceTexture;
 uniform vec2 resolution;
 uniform float time;
 
@@ -35,17 +35,17 @@ vec4 laplace(vec2 uv, vec2 offset){
     vec4 laplacePixel = vec4(0.0, 0.0, 0.0, 1.0);
 
     //Center texel
-    laplacePixel += texture2D( chemicalTexture, uv ) * -1.0;
+    laplacePixel += texture2D( sourceTexture, uv ) * -1.0;
     //Orthogonal texels
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( 0.0, offset.y )  ) * 0.2;
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( 0.0, - offset.y )) * 0.2;
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( offset.x, 0.0 )  ) * 0.2;
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( - offset.x, 0.0 )) * 0.2;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( 0.0, offset.y )  ) * 0.2;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( 0.0, - offset.y )) * 0.2;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( offset.x, 0.0 )  ) * 0.2;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( - offset.x, 0.0 )) * 0.2;
     //Diagonal texels
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( offset.x,   offset.y ) ) * 0.05;
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( offset.x,  -offset.y ) ) * 0.05;
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( -offset.x,  offset.y ) ) * 0.05;
-    laplacePixel += texture2D( chemicalTexture, uv + vec2( -offset.x, -offset.y ) ) * 0.05;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( offset.x,   offset.y ) ) * 0.05;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( offset.x,  -offset.y ) ) * 0.05;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( -offset.x,  offset.y ) ) * 0.05;
+    laplacePixel += texture2D( sourceTexture, uv + vec2( -offset.x, -offset.y ) ) * 0.05;
 
     return laplacePixel;
 }
@@ -74,7 +74,7 @@ void main() {
 
     vec2 texelSize = 1.0 / resolution.xy;
     vec2 uv = vUv;
-    vec4 pixel = texture2D( chemicalTexture, uv );
+    vec4 pixel = texture2D( sourceTexture, uv );
     vec2 offset = texelSize * 1.0; //Default 1.0. Change the multiplier for fun times
 
 
@@ -83,7 +83,7 @@ void main() {
 
 
     //// Do the reaction-diffusion math
-    vec4 currentPixel = texture2D( chemicalTexture, uv );
+    vec4 currentPixel = texture2D( sourceTexture, uv );
     float a = currentPixel.r; //Swap G and R for fun times
     float b = currentPixel.g;
     float c = currentPixel.b;

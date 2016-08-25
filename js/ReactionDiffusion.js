@@ -4,18 +4,18 @@
 var THREE;
 
 //Starts on document load
-$(function() {
+$(function () {
     var container = $("#reaction-diffusion-container");
-    if(container != null){
+    if (container != null) {
         var simulator = new ReactionDiffusionSimulator(container);
-    }
-    else{
+    } else {
         console.error("No element with id \"reaction-diffusion-container\" was found.");
     }
 });
 
 //Expects a JQuery object representing the container this will render into.
 function ReactionDiffusionSimulator($container) {
+    //
     var loadingSemaphore = 0;
 
     //Presets serialized from JSON
@@ -54,7 +54,7 @@ function ReactionDiffusionSimulator($container) {
 
     //Pseudo-constructor. Load resources, returning if we don't have anything
     //we require to run.
-    (function() {
+    (function () {
 
         //Early out if we don't have WebGL
         if (!Detector.webgl) {
@@ -76,19 +76,19 @@ function ReactionDiffusionSimulator($container) {
 
         //Load presets object from JSON
         signalLoadStarted();
-        $.getJSON("js/Presets.js", function(result) {
+        $.getJSON("js/Presets.js", function (result) {
             presets = result;
             signalLoadFinished();
         });
     })();
 
-    function signalLoadStarted(){
+    function signalLoadStarted() {
         loadingSemaphore += 1;
     }
 
-    function signalLoadFinished(){
+    function signalLoadFinished() {
         loadingSemaphore -= 1;
-        if(loadingSemaphore <= 0){
+        if (loadingSemaphore <= 0) {
             init();
         }
     }
@@ -96,17 +96,20 @@ function ReactionDiffusionSimulator($container) {
     function init() {
 
         //Set up renderer and embed in HTML
-        renderer = new THREE.WebGLRenderer({ premultipliedAlpha : false, preserveDrawingBuffer: true });
+        renderer = new THREE.WebGLRenderer({
+            premultipliedAlpha: false,
+            preserveDrawingBuffer: true
+        });
         renderer.setSize(container.offsetWidth, container.offsetHeight);
         renderer.setClearColor(0x00ffff, 1); //Cyan clear color
         renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
 
-        if ( ! renderer.extensions.get( "OES_texture_float" ) ) {
+        if (!renderer.extensions.get("OES_texture_float")) {
             console.log("No OES_texture_float support for float textures.");
         }
 
-        if ( renderer.capabilities.maxVertexTextures === 0 ) {
+        if (renderer.capabilities.maxVertexTextures === 0) {
             console.log("No support for vertex shader textures.");
         }
 
@@ -117,8 +120,7 @@ function ReactionDiffusionSimulator($container) {
         //camera = new THREE.PerspectiveCamera( 50, container.offsetWidth / container.offsetHeight, 1, 1000 );
         camera = new THREE.OrthographicCamera(-0.5,
             0.5,
-            0.5,
-            -0.5,
+            0.5, -0.5,
             150, 1000);
         camera.position.y = 0;
         camera.position.z = 500;
@@ -153,7 +155,7 @@ function ReactionDiffusionSimulator($container) {
         initRenderTargetFromImage(computeRenderTargets[0], 'bias-image.png');
         initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
         doRenderPass(0);
-        applyFunctionToRenderTarget(computeRenderTargets[0], function(texture){
+        applyFunctionToRenderTarget(computeRenderTargets[0], function (texture) {
             //Seed it with the variables we want
             //seedInitial(texture);
             //seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
@@ -162,7 +164,7 @@ function ReactionDiffusionSimulator($container) {
             //Add some bias in the center
             seedFilledCircle(texture, texture.width * 0.5, texture.height * 0.5, Math.min(texture.width, texture.height) * 0.25, 2);
         });
-        applyFunctionToRenderTarget(computeRenderTargets[1], function(texture){
+        applyFunctionToRenderTarget(computeRenderTargets[1], function (texture) {
             //Seed it with the variables we want
             //seedInitial(texture);
             //seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
@@ -175,11 +177,19 @@ function ReactionDiffusionSimulator($container) {
         renderLoop();
     }
 
-    function initMaterials(){
+    function initMaterials() {
         displayMaterialUniforms = {
-            time: { type: "f", value: 1.0 },
-            resolution: { type: "v2", value: new THREE.Vector2() },
-            displayTexture: { value: null }
+            time: {
+                type: "f",
+                value: 1.0
+            },
+            resolution: {
+                type: "v2",
+                value: new THREE.Vector2()
+            },
+            displayTexture: {
+                value: null
+            }
         };
 
         displayMaterial = new THREE.ShaderMaterial({
@@ -190,17 +200,54 @@ function ReactionDiffusionSimulator($container) {
         displayMaterial.blending = THREE.NoBlending;
 
         computeUniforms = {
-            chemicalTexture: { type: "t", value: undefined },
-            resolution: { type: "v2", value: new THREE.Vector2() },
-            time: { type: "f", value: 1.0 },
-            d_a: { type: "f", value: 1.0 },
-            d_b: { type: "f", value: 1.0 },
-            feed: { type: "f", value: 1.0 },
-            kill: { type: "f", value: 1.0 },
-            biasStrength: { type: "f", value: 1.0 },
-            timestep: { type: "f", value: 1.0 },
-            interactPos: { type: "v2", value: new THREE.Vector2(-1, -1) },
-            doPass: { type: "f", value: 1.0 }
+            sourceTexture: {
+                type: "t",
+                value: undefined
+            },
+            resolution: {
+                type: "v2",
+                value: new THREE.Vector2()
+            },
+            time: {
+                type: "f",
+                value: 1.0
+            },
+            d_a: {
+                type: "f",
+                value: 1.0
+            },
+            d_b: {
+                type: "f",
+                value: 1.0
+            },
+            feed: {
+                type: "f",
+                value: 1.0
+            },
+            kill: {
+                type: "f",
+                value: 1.0
+            },
+            biasStrength: {
+                type: "f",
+                value: 1.0
+            },
+            timestep: {
+                type: "f",
+                value: 1.0
+            },
+            interactPos: {
+                type: "v2",
+                value: new THREE.Vector2(-1, -1)
+            },
+            doPass: {
+                type: "f",
+                value: 1.0
+            },
+            dropperSize: {
+                type: "f",
+                value: 1.0
+            }
         }
 
         computeMaterial = new THREE.ShaderMaterial({
@@ -211,7 +258,9 @@ function ReactionDiffusionSimulator($container) {
         computeMaterial.blending = THREE.NoBlending;
 
         passThroughUniforms = {
-            texture: { value: null }
+            texture: {
+                value: null
+            }
         };
         passThroughMaterial = new THREE.ShaderMaterial({
             uniforms: passThroughUniforms,
@@ -238,22 +287,22 @@ function ReactionDiffusionSimulator($container) {
         var currentOptions = new computeOptions();
 
         function updateValuesFromGUI() {
-        //heightmapVariable.material.uniforms.erosionConstant.value = effectController.erosionConstant;
-            computeUniforms.timestep = { value: currentOptions.timestep };
-            computeUniforms.d_a = { value: currentOptions.d_a };
-            computeUniforms.d_b = { value: currentOptions.d_b };
-            computeUniforms.feed = { value: currentOptions.feed };
-            computeUniforms.kill = { value: currentOptions.kill };
-            computeUniforms.biasStrength = { value: currentOptions.biasStrength };
+            //heightmapVariable.material.uniforms.erosionConstant.value = effectController.erosionConstant;
+            computeUniforms.timestep.value = currentOptions.timestep;
+            computeUniforms.d_a.value = currentOptions.d_a;
+            computeUniforms.d_b.value = currentOptions.d_b;
+            computeUniforms.feed.value = currentOptions.feed;
+            computeUniforms.kill.value = currentOptions.kill;
+            computeUniforms.biasStrength.value = currentOptions.biasStrength;
 
-            computeUniforms.dropperSize = { value: currentOptions.dropperSize };
+            computeUniforms.dropperSize.value = currentOptions.dropperSize;
 
             computeStepsPerFrame = currentOptions.iterationsPerFrame;
         }
 
-        function applyPreset(){
+        function applyPreset() {
             //Find the preset by the selected name
-            var preset = presets.filter(function( obj ) {
+            var preset = presets.filter(function (obj) {
                 return obj.name == currentOptions.selectedPresetName;
             })[0];
 
@@ -264,9 +313,9 @@ function ReactionDiffusionSimulator($container) {
             currentOptions.kill = preset.kill;
             currentOptions.biasStrength = preset.biasStrength;
 
-    //        for (var property in preset) {
-    //            currentOptions[property] = property;
-    //        }
+            //        for (var property in preset) {
+            //            currentOptions[property] = property;
+            //        }
 
             updateValuesFromGUI();
         }
@@ -274,25 +323,35 @@ function ReactionDiffusionSimulator($container) {
         var gui = new dat.GUI();
 
         //Preset control
-        var names = presets.map( function(preset) {return preset.name;} );
-        gui.add( currentOptions, "selectedPresetName", names ).onChange( applyPreset );
+        var names = presets.map(function (preset) {
+            return preset.name;
+        });
+        gui.add(currentOptions, "selectedPresetName", names).onChange(applyPreset);
 
         //Folder for preset variables
         var presetFolder = gui.addFolder('Preset Options');
-        presetFolder.add( currentOptions, "timestep", 0.001, 2.0, 0.001 ).onChange( updateValuesFromGUI ).listen();
-        presetFolder.add( currentOptions, "d_a", 0.001, 1.0, 0.001 ).onChange( updateValuesFromGUI ).listen();
-        presetFolder.add( currentOptions, "d_b", 0.001, 1.0, 0.001 ).onChange( updateValuesFromGUI ).listen();
-        presetFolder.add( currentOptions, "feed", 0.001, 0.1, 0.001 ).onChange( updateValuesFromGUI ).listen();
-        presetFolder.add( currentOptions, "kill", 0.001, 0.1, 0.001 ).onChange( updateValuesFromGUI ).listen();
-        presetFolder.add( currentOptions, "biasStrength", 0.0, 0.1, 0.001 ).onChange( updateValuesFromGUI ).listen();
+        presetFolder.add(currentOptions, "timestep", 0.001, 2.0, 0.001).onChange(updateValuesFromGUI).listen();
+        presetFolder.add(currentOptions, "d_a", 0.001, 1.0, 0.001).onChange(updateValuesFromGUI).listen();
+        presetFolder.add(currentOptions, "d_b", 0.001, 1.0, 0.001).onChange(updateValuesFromGUI).listen();
+        presetFolder.add(currentOptions, "feed", 0.001, 0.1, 0.001).onChange(updateValuesFromGUI).listen();
+        presetFolder.add(currentOptions, "kill", 0.001, 0.1, 0.001).onChange(updateValuesFromGUI).listen();
+        presetFolder.add(currentOptions, "biasStrength", 0.0, 0.1, 0.001).onChange(updateValuesFromGUI).listen();
 
-        gui.add( currentOptions, "dropperSize", 0.0, 100.0, 0.5).onFinishChange( updateValuesFromGUI ).listen();
-        gui.add( currentOptions, "iterationsPerFrame", 0, 50, 1).onChange( updateValuesFromGUI ).listen();
+        gui.add(currentOptions, "dropperSize", 0.0, 100.0, 0.5).onFinishChange(updateValuesFromGUI).listen();
+        gui.add(currentOptions, "iterationsPerFrame", 0, 50, 1).onChange(updateValuesFromGUI).listen();
 
-        var clearFn = { clear: function(){ clear(); }};
+        var clearFn = {
+            clear: function () {
+                clear();
+            }
+        };
         gui.add(clearFn, "clear");
 
-        var resetFn = { reset: function(){ reset(); }}
+        var resetFn = {
+            reset: function () {
+                reset();
+            }
+        }
         gui.add(resetFn, "reset");
 
         applyPreset();
@@ -313,22 +372,22 @@ function ReactionDiffusionSimulator($container) {
         console.log("Renderer sized to (" + canvasWidth + ", " + canvasHeight + ")");
 
         // TODO: Possible memory leak?
-        var primaryTarget = new THREE.WebGLRenderTarget(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier,
-                            {
-                                wrapS: THREE.ClampToEdgeWrapping,
-                                wrapT: THREE.ClampToEdgeWrapping,
-                                minFilter: filterType,
-                                magFilter: filterType,
-                                format: THREE.RGBAFormat,
-                                type: THREE.FloatType});
-        var alternateTarget = new THREE.WebGLRenderTarget(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier,
-                            {
-                                wrapS: THREE.ClampToEdgeWrapping,
-                                wrapT: THREE.ClampToEdgeWrapping,
-                                minFilter: filterType,
-                                magFilter: filterType,
-                                format: THREE.RGBAFormat,
-                                type: THREE.FloatType});
+        var primaryTarget = new THREE.WebGLRenderTarget(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier, {
+            wrapS: THREE.ClampToEdgeWrapping,
+            wrapT: THREE.ClampToEdgeWrapping,
+            minFilter: filterType,
+            magFilter: filterType,
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+        });
+        var alternateTarget = new THREE.WebGLRenderTarget(canvasWidth * internalResolutionMultiplier, canvasHeight * internalResolutionMultiplier, {
+            wrapS: THREE.ClampToEdgeWrapping,
+            wrapT: THREE.ClampToEdgeWrapping,
+            minFilter: filterType,
+            magFilter: filterType,
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+        });
 
         computeRenderTargets.push(primaryTarget);
         computeRenderTargets.push(alternateTarget);
@@ -340,14 +399,13 @@ function ReactionDiffusionSimulator($container) {
         console.log("Compute texture sized to (" + computeUniforms.resolution.value.x + ", " + computeUniforms.resolution.value.y + ")");
     }
 
-    var renderLoop = function(time)
-    {
+    var renderLoop = function (time) {
 
-        if(mouseIsDown){
+        if (mouseIsDown) {
             computeUniforms.interactPos.value = mousePos;
-    //        applyFunctionToRenderTarget(computeRenderTargets[currentTargetIndex], function(texture) {
-    //            seedCircle(texture, mousePos.x, mousePos.y, 25, 5);
-    //        });
+            //        applyFunctionToRenderTarget(computeRenderTargets[currentTargetIndex], function(texture) {
+            //            seedCircle(texture, mousePos.x, mousePos.y, 25, 5);
+            //        });
         }
 
         doRenderPass(time);
@@ -356,7 +414,7 @@ function ReactionDiffusionSimulator($container) {
         requestAnimationFrame(renderLoop);
     }
 
-    var doRenderPass = function(time) {
+    var doRenderPass = function (time) {
         //    var dt = (time - mLastTime)/20.0;
         //    if(dt > 0.8 || dt<=0)
         //        dt = 0.8;
@@ -373,13 +431,13 @@ function ReactionDiffusionSimulator($container) {
 
         // Render from the current RenderTarget into the other RenderTarget, then swap.
         // Repeat however many times per frame we desire.
-        for(var i=0; i<computeStepsPerFrame; i++) {
+        for (var i = 0; i < computeStepsPerFrame; i++) {
 
             var nextTargetIndex = currentTargetIndex === 0 ? 1 : 0;
 
-            computeUniforms.chemicalTexture.value = computeRenderTargets[currentTargetIndex].texture; //Put current target texture into material
+            computeUniforms.sourceTexture.value = computeRenderTargets[currentTargetIndex].texture; //Put current target texture into material
             renderer.render(scene, camera, computeRenderTargets[nextTargetIndex], true); //Render the scene to next target
-            computeUniforms.chemicalTexture.value = computeRenderTargets[nextTargetIndex].texture; //Put next target texture into material
+            computeUniforms.sourceTexture.value = computeRenderTargets[nextTargetIndex].texture; //Put next target texture into material
             displayMaterialUniforms.displayTexture.value = computeRenderTargets[nextTargetIndex].texture; //Assign to display material
 
             currentTargetIndex = nextTargetIndex;
@@ -404,21 +462,21 @@ function ReactionDiffusionSimulator($container) {
 
 
     function initRenderTargetFromImage(renderTarget, url) {
-        var sizeX = renderTarget.width;// / internalResolutionMultiplier;
-        var sizeY = renderTarget.height;// / internalResolutionMultiplier;
+        var sizeX = renderTarget.width; // / internalResolutionMultiplier;
+        var sizeY = renderTarget.height; // / internalResolutionMultiplier;
 
-    //    //Make a data texture
-    //    var buffer = new Float32Array( sizeX * sizeY * 4 );
-    //    var texture = new THREE.DataTexture( buffer, sizeX, sizeY, THREE.RGBAFormat, THREE.FloatType );
-    //    texture.needsUpdate = true;
+        //    //Make a data texture
+        //    var buffer = new Float32Array( sizeX * sizeY * 4 );
+        //    var texture = new THREE.DataTexture( buffer, sizeX, sizeY, THREE.RGBAFormat, THREE.FloatType );
+        //    texture.needsUpdate = true;
 
-    //    //Seed it with the variables we want
-    //    seedInitial(texture);
-    //    //seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
-    //    seedCircle(texture, sizeX * 0.5, sizeY * 0.5, Math.min(sizeX, sizeY) * 0.33, Math.min(sizeX, sizeY) * 0.125);
-    //
-    //    //Add some bias in the center
-    //    seedFilledCircle(texture, sizeX * 0.5, sizeY * 0.5, Math.min(sizeX, sizeY) * 0.25, 2);
+        //    //Seed it with the variables we want
+        //    seedInitial(texture);
+        //    //seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
+        //    seedCircle(texture, sizeX * 0.5, sizeY * 0.5, Math.min(sizeX, sizeY) * 0.33, Math.min(sizeX, sizeY) * 0.125);
+        //
+        //    //Add some bias in the center
+        //    seedFilledCircle(texture, sizeX * 0.5, sizeY * 0.5, Math.min(sizeX, sizeY) * 0.25, 2);
 
         //Render it to the rendertarget
         //renderer.renderTexture( texture, renderTarget );
@@ -426,21 +484,21 @@ function ReactionDiffusionSimulator($container) {
 
 
         var loader = new THREE.TextureLoader();
-            loader.load(url, function ( texture ) {
-                importedBias = texture;
-                //Run the rest of the program
-                //Initialize the texture from the imported image
-                passThroughUniforms.texture.value = importedBias;
+        loader.load(url, function (texture) {
+            importedBias = texture;
+            //Run the rest of the program
+            //Initialize the texture from the imported image
+            passThroughUniforms.texture.value = importedBias;
 
 
-                displayMesh.material = passThroughMaterial;
-                renderer.render(scene, camera, renderTarget);
+            displayMesh.material = passThroughMaterial;
+            renderer.render(scene, camera, renderTarget);
 
-            });
+        });
 
     }
 
-    function applyFunctionToRenderTarget(renderTarget, callback){
+    function applyFunctionToRenderTarget(renderTarget, callback) {
         //Read renderTarget into a DataTexture
         var buffer = new Float32Array(renderTarget.width * renderTarget.height * 4);
         renderer.readRenderTargetPixels(renderTarget, 0, 0, renderTarget.width, renderTarget.height, buffer);
@@ -540,35 +598,30 @@ function ReactionDiffusionSimulator($container) {
 
     // INPUT HANDLING ---------------------------------------------------- //
 
-    function onDocumentMouseDown( event ) {
+    function onDocumentMouseDown(event) {
         var rect = container.getBoundingClientRect();
         mousePos.set(event.clientX - rect.left,
-                     rect.bottom - event.clientY); //(event.clientY - rect.top) to invert
+            rect.bottom - event.clientY); //(event.clientY - rect.top) to invert
         mousePos.x *= internalResolutionMultiplier;
         mousePos.y *= internalResolutionMultiplier;
-
-        //computeUniforms.interactPos.value = mousePos;
         mouseIsDown = true;
 
         //console.log("Clicked at (" + mousePos.x + ", " + mousePos.y + ")");
 
     }
 
-    function onDocumentMouseUp( event ) {
+    function onDocumentMouseUp(event) {
         //Put the interaction position offscreen.
-
         mousePos.set(-1.0, -1.0);
-
-        //computeUniforms.interactPos.value = mousePos;
         mouseIsDown = false;
     }
 
-    function onDocumentMouseMove( event ) {
+    function onDocumentMouseMove(event) {
         //Only update if the mouse is held down
-        if(mouseIsDown){
+        if (mouseIsDown) {
             var rect = container.getBoundingClientRect();
             mousePos.set(event.clientX - rect.left,
-                         rect.bottom - event.clientY); //(event.clientY - rect.top) to invert
+                rect.bottom - event.clientY); //(event.clientY - rect.top) to invert
             mousePos.x *= internalResolutionMultiplier;
             mousePos.y *= internalResolutionMultiplier;
         }
@@ -639,40 +692,38 @@ function ReactionDiffusionSimulator($container) {
 
 
     // UTILITY FUNCTIONS -------------------------------------------- //
-    function getSourceString(obj){
+    function getSourceString(obj) {
         var output = '';
         for (var property in obj) {
-          output += property + ': ' + obj[property]+';\n';
+            output += property + ': ' + obj[property] + ';\n';
         }
         return output;
     }
 
     function getPassThroughVertexShader() {
-
-        return	"varying vec2 vUv;\n" +
-                "void main() {\n" +
-                "   \n" +
-                "   vUv = uv;\n" +
-                //"	gl_Position = vec4( position, 1.0 );\n" +
-                "   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n" +
-                "   \n" +
-                "}\n";
+        return "varying vec2 vUv;\n" +
+            "void main() {\n" +
+            "   \n" +
+            "   vUv = uv;\n" +
+            //"	gl_Position = vec4( position, 1.0 );\n" +
+            "   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n" +
+            "   \n" +
+            "}\n";
 
     }
 
     function getPassThroughFragmentShader() {
-
-        return	"varying vec2 vUv;\n" +
-                "uniform sampler2D texture;\n" +
-                "\n" +
-                "void main() {\n" +
-                "\n" +
-                //"	vec2 uv = gl_FragCoord.xy / resolution.xy;\n" +
-                " vec2 uv = vUv;\n" +
-                "\n" +
-                "	gl_FragColor = texture2D( texture, uv );\n" +
-                "\n" +
-                "}\n";
+        return "varying vec2 vUv;\n" +
+            "uniform sampler2D texture;\n" +
+            "\n" +
+            "void main() {\n" +
+            "\n" +
+            //"	vec2 uv = gl_FragCoord.xy / resolution.xy;\n" +
+            " vec2 uv = vUv;\n" +
+            "\n" +
+            "	gl_FragColor = texture2D( texture, uv );\n" +
+            "\n" +
+            "}\n";
 
     }
 
