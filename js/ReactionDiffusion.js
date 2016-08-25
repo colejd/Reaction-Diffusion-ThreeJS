@@ -1,7 +1,7 @@
 //Starts on document load
 $(function () {
     var $container = $("#reaction-diffusion-container");
-    if (container.length !== 0) { //If we found it, go
+    if ($container.length !== 0) { //If we found it, go
         var simulator = new ReactionDiffusionSimulator($container);
     } else {
         console.error("No element with id \"reaction-diffusion-container\" was found.");
@@ -23,6 +23,7 @@ function ReactionDiffusionSimulator($container) {
 
     var display_frag_source;
     var compute_frag_source;
+    var compute_vert_source;
 
     var displayMesh;
     var displayMaterial;
@@ -40,7 +41,6 @@ function ReactionDiffusionSimulator($container) {
 
     var internalResolutionMultiplier = 1.0;
     var filterType = THREE.LinearFilter; //THREE.NearestFilter
-    var importedBias;
 
     var startTime = Date.now();
 
@@ -54,6 +54,7 @@ function ReactionDiffusionSimulator($container) {
         //Early out if we don't have WebGL
         if (!Detector.webgl) {
             Detector.addGetWebGLMessage(container);
+            console.error("WebGL is not supported on this browser.")
             return;
         }
 
@@ -74,9 +75,11 @@ function ReactionDiffusionSimulator($container) {
 
         //Load shader strings from files
         signalLoadStarted();
-        loadFiles(['shaders/display-frag.glsl', 'shaders/compute-frag.glsl'], function (shaderText) {
+        loadFiles(['shaders/display-frag.glsl', 'shaders/compute-frag.glsl', 'shaders/compute-vert.glsl'], function (shaderText) {
             display_frag_source = shaderText[0];
             compute_frag_source = shaderText[1];
+            compute_vert_source = shaderText[2];
+
             signalLoadFinished();
         }, function (url) {
             //alert('Failed to fetch "' + url + '"');
@@ -230,7 +233,7 @@ function ReactionDiffusionSimulator($container) {
 
         computeMaterial = new THREE.ShaderMaterial({
             uniforms: computeUniforms,
-            vertexShader: getPassThroughVertexShader(),
+            vertexShader: compute_vert_source,
             fragmentShader: compute_frag_source,
         });
         computeMaterial.blending = THREE.NoBlending;
@@ -463,11 +466,9 @@ function ReactionDiffusionSimulator($container) {
 
         var loader = new THREE.TextureLoader();
         loader.load(url, function (texture) {
-            importedBias = texture;
             //Run the rest of the program
             //Initialize the texture from the imported image
-            passThroughUniforms.texture.value = importedBias;
-
+            passThroughUniforms.texture.value = texture;
 
             displayMesh.material = passThroughMaterial;
             renderer.render(scene, camera, renderTarget);
@@ -670,38 +671,24 @@ function ReactionDiffusionSimulator($container) {
 
 
     // UTILITY FUNCTIONS -------------------------------------------- //
-    function getSourceString(obj) {
-        var output = '';
-        for (var property in obj) {
-            output += property + ': ' + obj[property] + ';\n';
-        }
-        return output;
-    }
-
     function getPassThroughVertexShader() {
-        return "varying vec2 vUv;\n" +
-            "void main() {\n" +
-            "   \n" +
-            "   vUv = uv;\n" +
-            //"	gl_Position = vec4( position, 1.0 );\n" +
-            "   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n" +
-            "   \n" +
-            "}\n";
+        return ["varying vec2 vUv;",
+                "void main() {",
+                "   vUv = uv;",
+                "   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);",
+                "}"
+               ].join("\n");
 
     }
 
     function getPassThroughFragmentShader() {
-        return "varying vec2 vUv;\n" +
-            "uniform sampler2D texture;\n" +
-            "\n" +
-            "void main() {\n" +
-            "\n" +
-            //"	vec2 uv = gl_FragCoord.xy / resolution.xy;\n" +
-            " vec2 uv = vUv;\n" +
-            "\n" +
-            "	gl_FragColor = texture2D( texture, uv );\n" +
-            "\n" +
-            "}\n";
+        return ["varying vec2 vUv;",
+                "uniform sampler2D texture;",
+                "void main() {",
+                " vec2 uv = vUv;",
+                "	gl_FragColor = texture2D( texture, uv );",
+                "}"
+                ].join("\n");
 
     }
 

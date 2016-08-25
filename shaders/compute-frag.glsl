@@ -5,10 +5,16 @@
 // [[0.05,  0.2,  0.05],
 //  [0.20, -1.0,  0.20],
 //  [0.05,  0.2,  0.05]]
+//
+// Red channel represents A concentration (0.0 - 1.0).
+// Green channel is represents B concentration (0.0 - 1.0).
+// Blue channel is used for bias; once inside, B will try not to
+//  spread beyond the blue areas, depending on biasStrength.
 
 #include <common>
 
-varying vec2 vUv;
+varying vec2 v_uv;
+varying vec2 v_uvs[9];
 
 uniform sampler2D sourceTexture;
 uniform vec2 resolution;
@@ -35,17 +41,17 @@ vec4 laplace(vec2 uv, vec2 offset){
     vec4 laplacePixel = vec4(0.0, 0.0, 0.0, 1.0);
 
     //Center texel
-    laplacePixel += texture2D( sourceTexture, uv ) * -1.0;
+    laplacePixel += texture2D( sourceTexture, v_uvs[4]) * -1.0;
     //Orthogonal texels
-    laplacePixel += texture2D( sourceTexture, uv + vec2( 0.0, offset.y )  ) * 0.2;
-    laplacePixel += texture2D( sourceTexture, uv + vec2( 0.0, - offset.y )) * 0.2;
-    laplacePixel += texture2D( sourceTexture, uv + vec2( offset.x, 0.0 )  ) * 0.2;
-    laplacePixel += texture2D( sourceTexture, uv + vec2( - offset.x, 0.0 )) * 0.2;
+    laplacePixel += texture2D( sourceTexture, v_uvs[1]) * 0.2;
+    laplacePixel += texture2D( sourceTexture, v_uvs[7]) * 0.2;
+    laplacePixel += texture2D( sourceTexture, v_uvs[5]) * 0.2;
+    laplacePixel += texture2D( sourceTexture, v_uvs[3]) * 0.2;
     //Diagonal texels
-    laplacePixel += texture2D( sourceTexture, uv + vec2( offset.x,   offset.y ) ) * 0.05;
-    laplacePixel += texture2D( sourceTexture, uv + vec2( offset.x,  -offset.y ) ) * 0.05;
-    laplacePixel += texture2D( sourceTexture, uv + vec2( -offset.x,  offset.y ) ) * 0.05;
-    laplacePixel += texture2D( sourceTexture, uv + vec2( -offset.x, -offset.y ) ) * 0.05;
+    laplacePixel += texture2D( sourceTexture, v_uvs[2]) * 0.05;
+    laplacePixel += texture2D( sourceTexture, v_uvs[8]) * 0.05;
+    laplacePixel += texture2D( sourceTexture, v_uvs[0]) * 0.05;
+    laplacePixel += texture2D( sourceTexture, v_uvs[6]) * 0.05;
 
     return laplacePixel;
 }
@@ -73,7 +79,7 @@ float when_ge(float x, float y) {
 void main() {
 
     vec2 texelSize = 1.0 / resolution.xy;
-    vec2 uv = vUv;
+    vec2 uv = v_uv;
     vec4 pixel = texture2D( sourceTexture, uv );
     vec2 offset = texelSize * 1.0; //Default 1.0. Change the multiplier for fun times
 
@@ -86,7 +92,7 @@ void main() {
     vec4 currentPixel = texture2D( sourceTexture, uv );
     float a = currentPixel.r; //Swap G and R for fun times
     float b = currentPixel.g;
-    float c = currentPixel.b;
+    float c = 1.0 * when_gt(currentPixel.b, 0.5); //Keep blue only if it's significant
 
     float deltaA = (d_a * laplacePixel.r) -
                     (a * b * b) +
