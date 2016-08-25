@@ -1,12 +1,7 @@
-"use strict";
-
-//Define THREE globally so that autocomplete uses it
-var THREE;
-
 //Starts on document load
 $(function () {
     var container = $("#reaction-diffusion-container");
-    if (container != null) {
+    if (container.length !== 0) { //If we found it, go
         var simulator = new ReactionDiffusionSimulator(container);
     } else {
         console.error("No element with id \"reaction-diffusion-container\" was found.");
