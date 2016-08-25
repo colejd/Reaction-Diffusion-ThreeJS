@@ -73,7 +73,6 @@ float when_ge(float x, float y) {
 void main() {
 
     vec2 texelSize = 1.0 / resolution.xy;
-    //vec2 uv = gl_FragCoord.xy * texelSize;
     vec2 uv = vUv;
     vec4 pixel = texture2D( chemicalTexture, uv );
     vec2 offset = texelSize * 1.0; //Default 1.0. Change the multiplier for fun times
@@ -106,17 +105,19 @@ void main() {
 
     //// Draw a circle around interactPos
     float newB = 0.0;
-    float droppedValue = 0.55; //Value placed within circle
+    float droppedValue = 0.5; //Value placed within circle
     float dist = distance(uv / texelSize, interactPos);
 
     //if dist < dropperSize return 0, else return 1
-    //float distBranch = clamp(sign(dropperSize - dist), 0.0, 1.0);
     float distBranch = when_gt(dropperSize, dist);
     //if distBranch == 0 keep original value, otherwise assign droppedValue
     newB = mix(finalB, droppedValue, distBranch);
 
+    //Secondary "inner" brush
+//    float distBranchInner = when_lt(dist, dropperSize * 0.75);
+//    newB = mix(newB, 0.0, distBranchInner);
+
     //if mousePos is < 0 return 0, else return 1
-    //float mouseBranch = clamp(sign(interactPos.x), 0.0, 1.0);
     float mouseBranch = when_ge(interactPos.x, 0.0);
     //if mouseBranch == 0 keep finalB as original value, otherwise set finalB to newB
     finalB = mix(finalB, newB, mouseBranch);
@@ -124,6 +125,11 @@ void main() {
 
     //// Apply the final color
     gl_FragColor = vec4(finalA, finalB, pixel.b, 1.0) * doPass;
+
+    //// Destroy any chemicals near the border (oh, my)
+    if(gl_FragCoord.x == 0.5 || gl_FragCoord.y == 0.5 || gl_FragCoord.x == resolution.x - 0.5 || gl_FragCoord.y == resolution.y - 0.5){
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
 
 
     //// Optionally do test stuff

@@ -22,11 +22,13 @@ a {
 
 #reaction-diffusion-container {
     width: 512px;
-    height: 750px;
-    display: block;
+    height: 128px;
+/*    display: block;*/
     margin: auto;
     margin-top: 50px;
-    background: rgb(186, 255, 155);
+    background: #000000;
+/*    background: rgb(186, 255, 155);*/
+    cursor: default; /* Prevent caret from appearing when click-dragging */
 /*    border: 1px;*/
 /*    border-color: white;*/
 }
