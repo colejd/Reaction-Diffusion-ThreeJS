@@ -1,8 +1,8 @@
 //Starts on document load
 $(function () {
-    var container = $("#reaction-diffusion-container");
+    var $container = $("#reaction-diffusion-container");
     if (container.length !== 0) { //If we found it, go
-        var simulator = new ReactionDiffusionSimulator(container);
+        var simulator = new ReactionDiffusionSimulator($container);
     } else {
         console.error("No element with id \"reaction-diffusion-container\" was found.");
     }
@@ -10,7 +10,7 @@ $(function () {
 
 //Expects a JQuery object representing the container this will render into.
 function ReactionDiffusionSimulator($container) {
-    //
+    //If <= 0, the object is ready to begin running.
     var loadingSemaphore = 0;
 
     //Presets serialized from JSON
@@ -57,6 +57,21 @@ function ReactionDiffusionSimulator($container) {
             return;
         }
 
+        renderer = new THREE.WebGLRenderer({
+            premultipliedAlpha: false,
+            preserveDrawingBuffer: true
+        });
+
+        if (!renderer.extensions.get("OES_texture_float")) {
+            console.error("No OES_texture_float support for float textures.");
+            return;
+        }
+
+        if (renderer.capabilities.maxVertexTextures === 0) {
+            console.error("No support for vertex shader textures.");
+            return;
+        }
+
         //Load shader strings from files
         signalLoadStarted();
         loadFiles(['shaders/display-frag.glsl', 'shaders/compute-frag.glsl'], function (shaderText) {
@@ -64,7 +79,7 @@ function ReactionDiffusionSimulator($container) {
             compute_frag_source = shaderText[1];
             signalLoadFinished();
         }, function (url) {
-            alert('Failed to fetch "' + url + '"');
+            //alert('Failed to fetch "' + url + '"');
             console.error('Failed to fetch "' + url + '"');
             return;
         });
@@ -77,10 +92,12 @@ function ReactionDiffusionSimulator($container) {
         });
     })();
 
+    //Raises the loading semaphore.
     function signalLoadStarted() {
         loadingSemaphore += 1;
     }
 
+    //Decrements the loading semaphore and starts execution if it is fully lowered.
     function signalLoadFinished() {
         loadingSemaphore -= 1;
         if (loadingSemaphore <= 0) {
@@ -88,51 +105,26 @@ function ReactionDiffusionSimulator($container) {
         }
     }
 
+    //Begin execution here
     function init() {
-
         //Set up renderer and embed in HTML
-        renderer = new THREE.WebGLRenderer({
-            premultipliedAlpha: false,
-            preserveDrawingBuffer: true
-        });
         renderer.setSize(container.offsetWidth, container.offsetHeight);
         renderer.setClearColor(0x00ffff, 1); //Cyan clear color
         renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
 
-        if (!renderer.extensions.get("OES_texture_float")) {
-            console.log("No OES_texture_float support for float textures.");
-        }
-
-        if (renderer.capabilities.maxVertexTextures === 0) {
-            console.log("No support for vertex shader textures.");
-        }
-
         initMaterials();
 
         scene = new THREE.Scene();
-
-        //camera = new THREE.PerspectiveCamera( 50, container.offsetWidth / container.offsetHeight, 1, 1000 );
-        camera = new THREE.OrthographicCamera(-0.5,
-            0.5,
-            0.5, -0.5,
-            150, 1000);
-        camera.position.y = 0;
-        camera.position.z = 500;
-        camera.lookAt(scene.position);
-
-        //var testMaterial = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+        //Set up 1x1 orthographic camera looking along the negative z axis
+        camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 10, 100);
+        camera.position.z = 50; //Scoot backward 50 units
 
         //Make plane primitive
         var displayGeometry = new THREE.PlaneGeometry(1.0, 1.0);
 
         displayMesh = new THREE.Mesh(displayGeometry, displayMaterial);
         scene.add(displayMesh);
-
-        //Add a wireframe to help see the borders of the mesh
-        //var helper = new THREE.WireframeHelper(displayMesh);
-        //helper.material.color.set(0xff0000);
-        //scene.add( helper );
 
         //Set up GUI
         initGUI();
@@ -149,25 +141,16 @@ function ReactionDiffusionSimulator($container) {
 
         initRenderTargetFromImage(computeRenderTargets[0], 'bias-image.png');
         initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
-        doRenderPass(0);
-        applyFunctionToRenderTarget(computeRenderTargets[0], function (texture) {
-            //Seed it with the variables we want
-            //seedInitial(texture);
-            //seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
-            seedCircle(texture, texture.width * 0.5, texture.height * 0.5, Math.min(texture.width, texture.height) * 0.33, Math.min(texture.width, texture.height) * 0.125);
-
-            //Add some bias in the center
-            seedFilledCircle(texture, texture.width * 0.5, texture.height * 0.5, Math.min(texture.width, texture.height) * 0.25, 2);
-        });
-        applyFunctionToRenderTarget(computeRenderTargets[1], function (texture) {
-            //Seed it with the variables we want
-            //seedInitial(texture);
-            //seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
-            seedCircle(texture, texture.width * 0.5, texture.height * 0.5, Math.min(texture.width, texture.height) * 0.33, Math.min(texture.width, texture.height) * 0.125);
-
-            //Add some bias in the center
-            seedFilledCircle(texture, texture.width * 0.5, texture.height * 0.5, Math.min(texture.width, texture.height) * 0.25, 2);
-        });
+        //doRenderPass(0);
+//        applyFunctionToRenderTarget(computeRenderTargets[0], function (texture) {
+//            //Seed it with the variables we want
+//            //seedInitial(texture);
+//            //seedCircle(texture, sizeX * 0.5, sizeY * 0.5, 200, 50);
+//            seedCircle(texture, texture.width * 0.5, texture.height * 0.5, Math.min(texture.width, texture.height) * 0.33, Math.min(texture.width, texture.height) * 0.125);
+//
+//            //Add some bias in the center
+//            seedFilledCircle(texture, texture.width * 0.5, texture.height * 0.5, Math.min(texture.width, texture.height) * 0.25, 2);
+//        });
 
         renderLoop();
     }
