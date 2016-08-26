@@ -54,7 +54,7 @@ function ReactionDiffusionSimulator($container) {
         //Early out if we don't have WebGL
         if (!webgl_detect()) {
             console.error("WebGL is not supported on this browser.");
-            return;
+            return exit();
         }
 
         renderer = new THREE.WebGLRenderer({
@@ -62,14 +62,14 @@ function ReactionDiffusionSimulator($container) {
             preserveDrawingBuffer: true
         });
 
+        //Early out if we don't have the extensions we need
         if (!renderer.extensions.get("OES_texture_float")) {
             console.error("No OES_texture_float support for float textures.");
-            return;
+            return exit();
         }
-
         if (renderer.capabilities.maxVertexTextures === 0) {
             console.error("No support for vertex shader textures.");
-            return;
+            return exit();
         }
 
         //Load shader strings from files
@@ -83,7 +83,7 @@ function ReactionDiffusionSimulator($container) {
         }, function (url) {
             //alert('Failed to fetch "' + url + '"');
             console.error('Failed to fetch "' + url + '"');
-            return;
+            return exit();
         });
 
         //Load presets object from JSON
@@ -93,6 +93,13 @@ function ReactionDiffusionSimulator($container) {
             signalLoadFinished();
         });
     })();
+
+    function exit(){
+        $container.append('<div class="no-webgl-support">\
+                                <p>Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</a>.\
+                                <br> Find out how to get it <a href="http://get.webgl.org/">here</a>.</p>\
+                            </div>');
+    }
 
     //Raises the loading semaphore.
     function signalLoadStarted() {

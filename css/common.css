@@ -34,7 +34,7 @@ a {
 }
 
 .no-webgl-support {
-    position: absolute;
+    position: relative;
     color: white;
     background: black;
     width: inherit;
@@ -42,5 +42,4 @@ a {
     display: flex;
     justify-content: center; /* align horizontal */
     align-items: center; /* align vertical */
-    z-index: -1;
 }
