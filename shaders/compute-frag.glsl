@@ -10,6 +10,8 @@
 // Green channel is represents B concentration (0.0 - 1.0).
 // Blue channel is used for bias; once inside, B will try not to
 //  spread beyond the blue areas, depending on biasStrength.
+//
+// http://mrob.com/pub/comp/xmorphia/
 
 #include <common>
 
@@ -36,26 +38,6 @@ float rando(vec2 co){
   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
-// Get the result of the 3x3 laplacian convolution around the texel at the specified uv.
-vec4 laplace(vec2 uv, vec2 offset){
-    vec4 laplacePixel = vec4(0.0, 0.0, 0.0, 1.0);
-
-    //Center texel
-    laplacePixel += texture2D( sourceTexture, v_uvs[4]) * -1.0;
-    //Orthogonal texels
-    laplacePixel += texture2D( sourceTexture, v_uvs[1]) * 0.2;
-    laplacePixel += texture2D( sourceTexture, v_uvs[7]) * 0.2;
-    laplacePixel += texture2D( sourceTexture, v_uvs[5]) * 0.2;
-    laplacePixel += texture2D( sourceTexture, v_uvs[3]) * 0.2;
-    //Diagonal texels
-    laplacePixel += texture2D( sourceTexture, v_uvs[2]) * 0.05;
-    laplacePixel += texture2D( sourceTexture, v_uvs[8]) * 0.05;
-    laplacePixel += texture2D( sourceTexture, v_uvs[0]) * 0.05;
-    laplacePixel += texture2D( sourceTexture, v_uvs[6]) * 0.05;
-
-    return laplacePixel;
-}
-
 //http://theorangeduck.com/page/avoiding-shader-conditionals
 float when_eq(float x, float y) {
   return 1.0 - abs(sign(x - y));
@@ -76,61 +58,121 @@ float when_ge(float x, float y) {
   return 1.0 - max(sign(y - x), 0.0);
 }
 
-void main() {
+// Get the result of the 3x3 laplacian convolution around the texel at the specified uv.
+vec4 laplace9Point(vec4 centerPixel) {
+    vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
 
-    vec2 texelSize = 1.0 / resolution.xy;
-    vec2 uv = v_uv;
-    vec4 pixel = texture2D( sourceTexture, uv );
-    vec2 offset = texelSize * 1.0; //Default 1.0. Change the multiplier for fun times
+    //Center texel
+    result += centerPixel * -1.0;
+    //Orthogonal texels
+    result += texture2D( sourceTexture, v_uvs[1] ) * 0.2;
+    result += texture2D( sourceTexture, v_uvs[2] ) * 0.2;
+    result += texture2D( sourceTexture, v_uvs[3] ) * 0.2;
+    result += texture2D( sourceTexture, v_uvs[4] ) * 0.2;
+    //Diagonal texels
+    result += texture2D( sourceTexture, v_uvs[5] ) * 0.05;
+    result += texture2D( sourceTexture, v_uvs[6] ) * 0.05;
+    result += texture2D( sourceTexture, v_uvs[7] ) * 0.05;
+    result += texture2D( sourceTexture, v_uvs[8] ) * 0.05;
 
+    return result;
+}
 
-    //// Perform Laplace convolution
-    vec4 laplacePixel = laplace(uv, offset);
+vec4 laplace5Point(vec4 centerPixel) {
+    vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
 
+    //Center texel
+    result += centerPixel * -4.0;
+    //Orthogonal texels
+    result += texture2D( sourceTexture, v_uvs[1] );
+    result += texture2D( sourceTexture, v_uvs[2] );
+    result += texture2D( sourceTexture, v_uvs[3] );
+    result += texture2D( sourceTexture, v_uvs[4] );
 
-    //// Do the reaction-diffusion math
-    vec4 currentPixel = texture2D( sourceTexture, uv );
-    float a = currentPixel.r; //Swap G and R for fun times
-    float b = currentPixel.g;
-    float c = 1.0 * when_gt(currentPixel.b, 0.5); //Keep blue only if it's significant
+    return result;
+}
 
-    float deltaA = (d_a * laplacePixel.r) -
-                    (a * b * b) +
-                    (feed * (1.0 - a));
+// Reaction-diffusion
+vec4 react(vec4 pixel, vec4 convolution) {
+    float a = pixel.r; //Swap G and R for fun times
+    float b = pixel.g;
+    float c = 1.0 * when_gt(pixel.b, 0.5); //Keep blue only if it's significant
+
+    float reactionRate = a * b * b;
+
+    float deltaA = (d_a * convolution.r) //Diffusion term
+                    - reactionRate //Reaction Rate
+                    + (feed * (1.0 - a)); //Replenishment term, f is scaled so A <= 1.0
 
     float finalA = a + (deltaA * timestep);
     //finalA = clamp(finalA, 0.0, 1.0);
 
-    float deltaB = (d_b * laplacePixel.g) +
-                    (a * b * b) -
-                    (((kill + feed) - (c * biasStrength)) * b);//((k + feed) * b)
+    float deltaB = (d_b * convolution.g) //Diffusion term
+                    + reactionRate //Reaction rate
+                    - (((kill + feed) - (c * biasStrength)) * b); //Diminishment term, scaled so b >= 0, must not be greater than replenishment
+                    //- ((kill + feed) * b);
 
     float finalB = b + (deltaB * timestep);
     //finalB = clamp(finalB, 0.0, 1.0);
 
+    return vec4(finalA, finalB, pixel.b, 1.0);
+}
+
+//Based on jsexp implementation. Doesn't use d_a or d_b
+vec4 react2(vec4 pixel, vec4 convolution) {
+    float delta = 1.0;
+
+    //Magic values seem to work with 5-point stencil
+    float da = 0.2097;
+    float db = 0.105;
+
+    float a = pixel.r;
+    float b = pixel.g;
+    float abb = pixel.r * pixel.g * pixel.g;
+
+    float du = da *convolution.r
+                - abb
+                + feed*(1.0 - a);
+    float dv = db *convolution.g
+                + abb
+                - (feed+kill)*b;
+    vec4 dst = pixel + delta*vec4(du, dv, 0.0, 1.0);
+
+    return dst;
+
+}
+
+void main() {
+
+    vec2 texelSize = 1.0 / resolution.xy;
+    vec2 offset = texelSize * 1.0; //Default 1.0. Change the multiplier for fun times
+    vec4 pixel = texture2D( sourceTexture, v_uv );
+
+    //// Perform Laplace convolution for pixel
+    vec4 convolution = laplace9Point(pixel);
+
+    vec4 reaction = react(pixel, convolution);
+
+    vec4 final = reaction;
 
     //// Draw a circle around interactPos
     float newB = 0.0;
     float droppedValue = 0.5; //Value placed within circle
-    float dist = distance(uv / texelSize, interactPos);
+    float dist = distance(v_uv / texelSize, interactPos);
 
-    //if dist < dropperSize return 0, else return 1
     float distBranch = when_gt(dropperSize, dist);
-    //if distBranch == 0 keep original value, otherwise assign droppedValue
-    newB = mix(finalB, droppedValue, distBranch);
+    newB = mix(final.g, droppedValue, distBranch);
 
     //Secondary "inner" brush
 //    float distBranchInner = when_lt(dist, dropperSize * 0.75);
 //    newB = mix(newB, 0.0, distBranchInner);
 
-    //if mousePos is < 0 return 0, else return 1
     float mouseBranch = when_ge(interactPos.x, 0.0);
-    //if mouseBranch == 0 keep finalB as original value, otherwise set finalB to newB
-    finalB = mix(finalB, newB, mouseBranch);
+    final.g = mix(final.g, newB, mouseBranch);
 
 
     //// Apply the final color
-    gl_FragColor = vec4(finalA, finalB, pixel.b, 1.0) * doPass;
+    gl_FragColor = final * doPass;
 
     //// Destroy any chemicals near the border (oh, my)
     if(gl_FragCoord.x == 0.5 || gl_FragCoord.y == 0.5 || gl_FragCoord.x == resolution.x - 0.5 || gl_FragCoord.y == resolution.y - 0.5){

@@ -43,27 +43,14 @@ void main() {
     float start = 1.0 * when_gt(pixel.r, 0.0);
     float c = clamp(start - (pixel.r - pixel.g), 0.0, 1.0); //a - b adds a bit of thickness to the center of blobs
 
-    //Black on white
-    //float c = clamp(pixel.r - pixel.g, 0.0, 1.0); //a - b adds a bit of thickness to the center of blobs
-
     //High pass threshold
 //    float highPassThreshold = 0.5;
 //    float highPassBranch = clamp(sign(c - highPassThreshold), 0.0, 1.0);
 //    c = mix(0.0, c, highPassBranch);
 
-
-    //vec4 multiplier = vec4(1.0, 0.7294, 0.302, 1.0); //Firefly red
-    vec4 multiplier = vec4(1.0, 1.0, 1.0, 1.0);
-    vec4 finalColor = vec4(c, c, c, 1.0) * multiplier;
-
-//    //Static effect on blue pixels for no reason
-//    float noise = rando(uv.xy * time);
-//    //add noise value to c if pixel.b > 0
-//    float blueBranch = when_gt(pixel.b, 0.5);
-//    float newC = mix(c, c + noise, blueBranch);
-//    finalColor = vec4(newC, newC, newC, 1.0);
-//    //clamp between 0 and 1?
-
+    //vec4 tint = vec4(1.0, 0.7294, 0.302, 1.0); //Firefly red
+    vec4 tint = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 finalColor = vec4(c, c, c, 1.0) * tint;
 
     //Apply the final color
     gl_FragColor = finalColor;

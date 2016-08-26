@@ -311,7 +311,7 @@ function ReactionDiffusionSimulator($container) {
 
         //Folder for preset variables
         var presetFolder = gui.addFolder('Preset Options');
-        presetFolder.add(currentOptions, "timestep", 0.001, 2.0, 0.001).onChange(updateValuesFromGUI).listen();
+        presetFolder.add(currentOptions, "timestep", 0.0, 1.0, 0.01).onChange(updateValuesFromGUI).listen();
         presetFolder.add(currentOptions, "d_a", 0.001, 1.0, 0.001).onChange(updateValuesFromGUI).listen();
         presetFolder.add(currentOptions, "d_b", 0.001, 1.0, 0.001).onChange(updateValuesFromGUI).listen();
         presetFolder.add(currentOptions, "feed", 0.001, 0.1, 0.001).onChange(updateValuesFromGUI).listen();
