@@ -13,6 +13,8 @@
 //
 // http://mrob.com/pub/comp/xmorphia/
 
+#include <common>
+
 varying vec2 v_uv;
 varying vec2 v_uvs[9];
 
@@ -20,6 +22,8 @@ uniform sampler2D sourceTexture;
 uniform vec2 resolution;
 uniform float time;
 
+uniform float d_a; //Diffusion rate of A
+uniform float d_b; //Diffusion rate of B
 uniform float feed; //Growth rate for B
 uniform float kill;    //Kill rate for B
 uniform float biasStrength;
@@ -54,9 +58,8 @@ float when_ge(float x, float y) {
   return 1.0 - max(sign(y - x), 0.0);
 }
 
-//Get the laplacian using a 9-point stencil and the terms from
-//http://www.karlsims.com/rd.html
-vec4 laplace9Point_Sims(vec4 centerPixel) {
+// Get the result of the 3x3 laplacian convolution around the texel at the specified uv.
+vec4 laplace9Point(vec4 centerPixel) {
     vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
 
     //Center texel
@@ -75,9 +78,7 @@ vec4 laplace9Point_Sims(vec4 centerPixel) {
     return result;
 }
 
-//Get the laplacian using a 9-point stencil
-//https://en.wikipedia.org/wiki/Discrete_Laplace_operator
-vec4 laplace9Point(vec4 centerPixel) {
+vec4 laplace9Point2(vec4 centerPixel) {
     vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
 
     //Center texel
@@ -112,49 +113,84 @@ vec4 laplace5Point(vec4 centerPixel) {
 }
 
 // Reaction-diffusion
-//(pixel value, value of convolution at pixel, diffusion rate of A, diffusion rate of B)
-vec4 react(vec4 pixel, vec4 convolution, float da, float db) {
+vec4 react(vec4 pixel, vec4 convolution) {
     float a = pixel.r; //Swap G and R for fun times
     float b = pixel.g;
     float c = 1.0 * when_gt(pixel.b, 0.5); //Keep blue only if it's significant
 
     float reactionRate = a * b * b;
 
-    float deltaA = (da * convolution.r) //Diffusion term
+    float deltaA = (d_a * convolution.r) //Diffusion term
                     - reactionRate //Reaction Rate
                     + (feed * (1.0 - a)); //Replenishment term, f is scaled so A <= 1.0
 
     float finalA = a + (deltaA * timestep);
-    finalA = clamp(finalA, 0.0, 1.0); //Clamp to prevent weirdness with altering the texture externally
+    //finalA = clamp(finalA, 0.0, 1.0);
 
-    float deltaB = (db * convolution.g) //Diffusion term
+    float deltaB = (d_b * convolution.g) //Diffusion term
                     + reactionRate //Reaction rate
                     - (((kill + feed) - (c * biasStrength)) * b); //Diminishment term, scaled so b >= 0, must not be greater than replenishment
                     //- ((kill + feed) * b);
 
     float finalB = b + (deltaB * timestep);
-    finalB = clamp(finalB, 0.0, 1.0); //Clamp to prevent weirdness with altering the texture externally
+    //finalB = clamp(finalB, 0.0, 1.0);
 
     return vec4(finalA, finalB, pixel.b, 1.0);
+}
+
+//Based on jsexp implementation. Doesn't use d_a or d_b
+vec4 react2(vec4 pixel, vec4 convolution) {
+    float delta = 1.0;
+
+    //Magic values seem to work with 5-point stencil
+    float da = 0.2097;
+    float db = 0.105;
+
+    float a = pixel.r;
+    float b = pixel.g;
+    float abb = pixel.r * pixel.g * pixel.g;
+
+    float du = da *convolution.r
+                - abb
+                + feed*(1.0 - a);
+    float dv = db *convolution.g
+                + abb
+                - (feed+kill)*b;
+    vec4 dst = pixel + delta*vec4(du, dv, 0.0, 1.0);
+
+    return dst;
+
+}
+
+vec4 react3(vec4 pixel, vec4 convolution){
+    //slider[minimum, default, maximum]
+    //uniform vec2 Diffusion; slider[(0,0),(0.082,0.041),(0.2,0.2)]
+    //uniform float timeStep; slider[0,1.,2]
+    //uniform float k; slider[0,0.064,0.1]
+    //uniform float f; slider[0,0.035,0.1]
+    float k = 0.064;
+    float f = 0.035;
+    float timeStep = 1.0;
+
+    vec4 v = pixel;
+	v.z = 0.0;
+	vec2 lv = convolution.xy;
+	float xyy = v.x*v.y*v.y;
+	vec2 dV = vec2( 0.082 * lv.x - xyy + f*(1.-v.x), 0.041 * lv.y + xyy - (f+k)*v.y);
+	v.xy+= timeStep*dV;
+	return vec4(v.xyz, 1.0);
 }
 
 void main() {
 
     vec2 texelSize = 1.0 / resolution.xy;
+    vec2 offset = texelSize * 1.0; //Default 1.0. Change the multiplier for fun times
     vec4 pixel = texture2D(sourceTexture, v_uv);
 
     //// Perform Laplace convolution for pixel
-//    vec4 convolution = laplace9Point_Sims(pixel);
-//    vec4 reaction = react(pixel, convolution, 1.0, 0.5);
+    vec4 convolution = laplace9Point2(pixel);
 
-//    vec4 convolution = laplace5Point(pixel);
-//    vec4 reaction = react(pixel, convolution, 0.2097, 0.105); //Magic numbers from jsexp seem to work better with standard kernels
-    //vec4 reaction = react(pixel, convolution, 0.082, 0.035); //Other magic values
-
-
-    vec4 convolution = laplace5Point(pixel);
-    vec4 reaction = react(pixel, convolution, 0.2097, 0.105);
-
+    vec4 reaction = react3(pixel, convolution);
 
     vec4 final = reaction;
 

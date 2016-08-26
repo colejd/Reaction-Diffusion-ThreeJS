@@ -32,3 +32,15 @@ a {
 /*    border: 1px;*/
 /*    border-color: white;*/
 }
+
+.no-webgl-support {
+    position: absolute;
+    color: white;
+    background: black;
+    width: inherit;
+    height: inherit;
+    display: flex;
+    justify-content: center; /* align horizontal */
+    align-items: center; /* align vertical */
+    z-index: -1;
+}

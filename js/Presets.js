@@ -2,40 +2,30 @@
 [
         {
             "name":"Default",
-            "d_a":1,
-            "d_b":0.5,
             "feed":0.055,
             "kill":0.062,
             "biasStrength":0
         },
         {
             "name":"Mitosis",
-            "d_a":1,
-            "d_b":0.5,
             "feed":0.0367,
             "kill":0.0649,
             "biasStrength":0
         },
         {
             "name":"Coral",
-            "d_a":1,
-            "d_b":0.5,
             "feed":0.0545,
             "kill":0.062,
             "biasStrength":0
         },
         {
             "name":"Biased",
-            "d_a":0.82,
-            "d_b":0.41,
             "feed":0.035,
             "kill":0.064,
             "biasStrength":0.005
         },
         {
             "name":"Nameplate",
-            "d_a":0.82,
-            "d_b":0.41,
             "feed":0.035,
             "kill":0.063,
             "biasStrength":0.01

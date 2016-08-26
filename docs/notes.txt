@@ -20,6 +20,7 @@ Links:
 [19] http://blogs.mathworks.com/steve/2006/10/04/separable-convolution/
 [20] http://blogs.mathworks.com/steve/2006/11/28/separable-convolution-part-2/
 [21] http://crsouza.com/2010/03/17/kernel-functions-for-machine-learning-applications/#laplacian
+[22] http://stackoverflow.com/questions/4483502/edge-detection-techniques
 
 
 
@@ -92,7 +93,8 @@ https://github.com/Syntopia/Fragmentarium/blob/master/Fragmentarium-Source/Examp
 (seems to be the standard multiplied by two)
 
 
-The Laplacian is the second derivative of the Gaussian.
+Sobel/Prewitt are first order derivative operators (measure slope). Laplace is second order (measures change in slope).
+
 
 Other way of doing it [16]:
 Highpass (6 Pixels)

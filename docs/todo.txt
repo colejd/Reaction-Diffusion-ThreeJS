@@ -1,6 +1,6 @@
 To Do:
-
-
+- Move name property out of preset objects and use as keys in JSON
+- Implement faster blur (http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/)
 
 Ideas:
 - Use the technique from http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/ to construct

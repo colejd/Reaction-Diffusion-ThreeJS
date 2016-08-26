@@ -52,9 +52,8 @@ function ReactionDiffusionSimulator($container) {
     (function () {
 
         //Early out if we don't have WebGL
-        if (!Detector.webgl) {
-            Detector.addGetWebGLMessage(container);
-            console.error("WebGL is not supported on this browser.")
+        if (!webgl_detect()) {
+            console.error("WebGL is not supported on this browser.");
             return;
         }
 
@@ -116,6 +115,12 @@ function ReactionDiffusionSimulator($container) {
         renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
 
+        //Set up listener events for container
+        container.onmousedown = onMouseDown;
+        document.onmouseup = onMouseUp;
+        container.onmousemove = onMouseMove;
+        container.onmouseout = onMouseOut;
+
         initMaterials();
 
         scene = new THREE.Scene();
@@ -132,18 +137,13 @@ function ReactionDiffusionSimulator($container) {
         //Set up GUI
         initGUI();
 
-        //Set up listener events
-        container.onmousedown = onDocumentMouseDown;
-        container.onmouseup = onDocumentMouseUp;
-        container.onmousemove = onDocumentMouseMove;
-
         stats = new Stats();
         container.appendChild(stats.dom);
 
         resize(container.clientWidth, container.clientHeight);
 
         initRenderTargetFromImage(computeRenderTargets[0], 'bias-image.png');
-        initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
+        //initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
         //doRenderPass(0);
 //        applyFunctionToRenderTarget(computeRenderTargets[0], function (texture) {
 //            //Seed it with the variables we want
@@ -190,14 +190,6 @@ function ReactionDiffusionSimulator($container) {
                 value: new THREE.Vector2()
             },
             time: {
-                type: "f",
-                value: 1.0
-            },
-            d_a: {
-                type: "f",
-                value: 1.0
-            },
-            d_b: {
                 type: "f",
                 value: 1.0
             },
@@ -270,12 +262,9 @@ function ReactionDiffusionSimulator($container) {
         function updateValuesFromGUI() {
             //heightmapVariable.material.uniforms.erosionConstant.value = effectController.erosionConstant;
             computeUniforms.timestep.value = currentOptions.timestep;
-            computeUniforms.d_a.value = currentOptions.d_a;
-            computeUniforms.d_b.value = currentOptions.d_b;
             computeUniforms.feed.value = currentOptions.feed;
             computeUniforms.kill.value = currentOptions.kill;
             computeUniforms.biasStrength.value = currentOptions.biasStrength;
-
             computeUniforms.dropperSize.value = currentOptions.dropperSize;
 
             computeStepsPerFrame = currentOptions.iterationsPerFrame;
@@ -288,15 +277,13 @@ function ReactionDiffusionSimulator($container) {
             })[0];
 
             //Apply the preset
-            currentOptions.d_a = preset.d_a;
-            currentOptions.d_b = preset.d_b;
             currentOptions.feed = preset.feed;
             currentOptions.kill = preset.kill;
             currentOptions.biasStrength = preset.biasStrength;
 
-            //        for (var property in preset) {
-            //            currentOptions[property] = property;
-            //        }
+//            for (var property in preset) {
+//                currentOptions[property] = property;
+//            }
 
             updateValuesFromGUI();
         }
@@ -311,15 +298,13 @@ function ReactionDiffusionSimulator($container) {
 
         //Folder for preset variables
         var presetFolder = gui.addFolder('Preset Options');
-        presetFolder.add(currentOptions, "timestep", 0.0, 1.0, 0.01).onChange(updateValuesFromGUI).listen();
-        presetFolder.add(currentOptions, "d_a", 0.001, 1.0, 0.001).onChange(updateValuesFromGUI).listen();
-        presetFolder.add(currentOptions, "d_b", 0.001, 1.0, 0.001).onChange(updateValuesFromGUI).listen();
         presetFolder.add(currentOptions, "feed", 0.001, 0.1, 0.001).onChange(updateValuesFromGUI).listen();
         presetFolder.add(currentOptions, "kill", 0.001, 0.1, 0.001).onChange(updateValuesFromGUI).listen();
         presetFolder.add(currentOptions, "biasStrength", 0.0, 0.1, 0.001).onChange(updateValuesFromGUI).listen();
 
         gui.add(currentOptions, "dropperSize", 0.0, 100.0, 0.5).onFinishChange(updateValuesFromGUI).listen();
         gui.add(currentOptions, "iterationsPerFrame", 0, 50, 1).onChange(updateValuesFromGUI).listen();
+        gui.add(currentOptions, "timestep", 0.0, 1.0, 0.01).onChange(updateValuesFromGUI).listen();
 
         var clearFn = {
             clear: function () {
@@ -383,10 +368,11 @@ function ReactionDiffusionSimulator($container) {
     var renderLoop = function (time) {
 
         if (mouseIsDown) {
-            computeUniforms.interactPos.value = mousePos;
-            //        applyFunctionToRenderTarget(computeRenderTargets[currentTargetIndex], function(texture) {
-            //            seedCircle(texture, mousePos.x, mousePos.y, 25, 5);
-            //        });
+            //computeUniforms.interactPos.value = mousePos;
+            applyFunctionToRenderTarget(computeRenderTargets[currentTargetIndex], function(texture) {
+                seedCircle(texture, mousePos.x, mousePos.y, 25, 5);
+                //seedFilledCircle(texture, mousePos.x, mousePos.y, 25);
+            });
         }
 
         doRenderPass(time);
@@ -438,7 +424,7 @@ function ReactionDiffusionSimulator($container) {
 
     function reset() {
         initRenderTargetFromImage(computeRenderTargets[0], 'bias-image.png');
-        initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
+        //initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
     }
 
 
@@ -489,8 +475,15 @@ function ReactionDiffusionSimulator($container) {
 
         //Render DataTexture into renderTarget
         passThroughUniforms.texture.value = texture;
+
+        //var oldMaterial = displayMesh.material;
         displayMesh.material = passThroughMaterial;
         renderer.render(scene, camera, renderTarget);
+        //displayMesh.material = oldMaterial;
+    }
+
+    function getNextRenderTarget(){
+        return computeRenderTargets[currentTargetIndex === 0 ? 1 : 0];
     }
 
     function seedInitial(texture) {
@@ -532,22 +525,22 @@ function ReactionDiffusionSimulator($container) {
         }
     }
 
-    function seedCircle(texture, x, y, radius = 100, thickness = 1, channel = 1) {
+    function seedCircle(texture, x, y, radius, thickness = 1, channel = 1, value = 1.0) {
         var pixels = texture.image.data;
         var width = texture.image.width;
         var height = texture.image.height;
 
         for (var reps = 0; reps < thickness; reps++) {
             var currentRadius = radius - reps;
-            var currentOpacity = 1.0; //1.0 - (reps / thickness);
+            var currentOpacity = value; //1.0 - (reps / thickness);
 
-            seedRing(texture, x, y, currentRadius, currentOpacity, channel);
+            seedRing(texture, x, y, currentRadius, channel, currentOpacity);
 
         }
 
     }
 
-    function seedRing(texture, x, y, radius, seedAmount = 1.0, channel = 1) {
+    function seedRing(texture, x, y, radius, channel = 1, value = 1.0) {
         var width = texture.image.width;
         var height = texture.image.height;
         var pixels = texture.image.data;
@@ -563,7 +556,7 @@ function ReactionDiffusionSimulator($container) {
 
             var index = (xCoord + yCoord * width) * 4;
             if (index >= 0 && index < width * height * channelWidth) {
-                pixels[index + channel] = seedAmount;
+                pixels[index + channel] = value;
             }
 
 
@@ -572,12 +565,25 @@ function ReactionDiffusionSimulator($container) {
     }
 
     function seedFilledCircle(texture, x, y, radius, channel = 1) {
-        seedCircle(texture, x, y, radius, radius, channel);
+        var pixels = texture.image.data;
+        var r = radius;
+        var row = x;
+        var col = y;
+        var channelWidth = 4; //RGBA
+        for (var i = -r; i < r; i++) {
+            for (var j = -r; j < r; j++) {
+                if ((i * i + j * j) < (r * r)) {
+                    var index = ((row + j) + (col + i) * texture.image.width) * 4;
+                    pixels[index + channel] = 0.5;
+                }
+            }
+        }
+        //seedCircle(texture, x, y, radius, radius, channel);
     }
 
     // INPUT HANDLING ---------------------------------------------------- //
 
-    function onDocumentMouseDown(event) {
+    function onMouseDown(event) {
         var rect = container.getBoundingClientRect();
         mousePos.set(event.clientX - rect.left,
             rect.bottom - event.clientY); //(event.clientY - rect.top) to invert
@@ -589,13 +595,18 @@ function ReactionDiffusionSimulator($container) {
 
     }
 
-    function onDocumentMouseUp(event) {
+    function onMouseUp(event) {
         //Put the interaction position offscreen.
-        mousePos.set(-1.0, -1.0);
+        mousePos.set(-1000.0, -1000.0);
         mouseIsDown = false;
     }
 
-    function onDocumentMouseMove(event) {
+    function onMouseOut(event) {
+        //Put the interaction position offscreen.
+        mousePos.set(-1000.0, -1000.0);
+    }
+
+    function onMouseMove(event) {
         //Only update if the mouse is held down
         if (mouseIsDown) {
             var rect = container.getBoundingClientRect();
@@ -672,9 +683,9 @@ function ReactionDiffusionSimulator($container) {
 
     // UTILITY FUNCTIONS -------------------------------------------- //
     function getPassThroughVertexShader() {
-        return ["varying vec2 vUv;",
+        return ["varying vec2 v_uv;",
                 "void main() {",
-                "   vUv = uv;",
+                "   v_uv = uv;",
                 "   gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);",
                 "}"
                ].join("\n");
@@ -682,14 +693,38 @@ function ReactionDiffusionSimulator($container) {
     }
 
     function getPassThroughFragmentShader() {
-        return ["varying vec2 vUv;",
+        return ["varying vec2 v_uv;",
                 "uniform sampler2D texture;",
                 "void main() {",
-                " vec2 uv = vUv;",
+                " vec2 uv = v_uv;",
                 "	gl_FragColor = texture2D( texture, uv );",
                 "}"
                 ].join("\n");
 
+    }
+
+    //http://stackoverflow.com/questions/11871077/proper-way-to-detect-webgl-support
+    function webgl_detect() {
+        if (!!window.WebGLRenderingContext) {
+            var canvas = document.createElement("canvas"),
+                 names = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"],
+               context = false;
+
+            for(var i=0;i<4;i++) {
+                try {
+                    context = canvas.getContext(names[i]);
+                    if (context && typeof context.getParameter == "function") {
+                        // WebGL is enabled
+                        return true;
+                    }
+                } catch(e) {}
+            }
+
+            // WebGL is supported, but disabled
+            return false;
+        }
+        // WebGL not supported
+        return false;
     }
 
 }

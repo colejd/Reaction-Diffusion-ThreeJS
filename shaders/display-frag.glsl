@@ -1,6 +1,6 @@
-#include <common>
+#define PI 3.1415926535897932384626433832795
 
-varying vec2 vUv;
+varying vec2 v_uv;
 
 uniform sampler2D displayTexture;
 uniform float time;
@@ -8,6 +8,17 @@ uniform vec2 resolution;
 
 float rando(vec2 co){
   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+//http://krazydad.com/tutorials/makecolors.php
+vec4 rainbow(vec2 uv){
+    float center = 0.5; //0.5
+    float width = 1.0; //0.5
+    float frequency = 5.0;
+    float red   = sin(frequency*uv.x + 0.0) * width + center;
+    float green = sin(frequency*uv.x + 2.0*PI/3.0) * width + center;
+    float blue  = sin(frequency*uv.x + 4.0*PI/3.0) * width + center;
+    return vec4(red, green, blue, 1.0);
 }
 
 //http://theorangeduck.com/page/avoiding-shader-conditionals
@@ -32,7 +43,7 @@ float when_ge(float x, float y) {
 
 void main() {
     vec2 texelSize = 1.0 / resolution.xy;
-    vec2 uv = vUv;
+    vec2 uv = v_uv;
     vec4 pixel = texture2D( displayTexture, uv );
     bool useHighPass = false;
 
@@ -51,6 +62,24 @@ void main() {
     //vec4 tint = vec4(1.0, 0.7294, 0.302, 1.0); //Firefly red
     vec4 tint = vec4(1.0, 1.0, 1.0, 1.0);
     vec4 finalColor = vec4(c, c, c, 1.0) * tint;
+
+//    //Static effect on blue pixels for no reason
+//    float noise = rando(uv.xy * time);
+//    //add noise value to c if pixel.b > 0
+//    float blueBranch = when_gt(pixel.b, 0.5);
+//    float newC = mix(c, c + noise, blueBranch);
+//    finalColor = vec4(newC, newC, newC, 1.0);
+
+    //Throw in some static wherever we have some B (green)
+//    float noise = rando(uv.xy + (time * 0.005));
+//    float gBranch = when_gt(pixel.g, 0.0);
+//    float newC = mix(c, c - noise, gBranch);
+//    finalColor = vec4(newC, newC, newC, 1.0);
+
+    //Replace B with rainbow
+//    vec4 rain = rainbow(uv.xy + (time * 0.005));
+//    float gBranch = when_gt(pixel.g, 0.01);
+//    finalColor = mix(finalColor, finalColor - rain, gBranch);
 
     //Apply the final color
     gl_FragColor = finalColor;
