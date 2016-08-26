@@ -1,13 +1,100 @@
-
 Links:
-http://www.karlsims.com/rd.html
-http://mrob.com/pub/comp/xmorphia/
-http://mrob.com/pub/comp/xmorphia/pearson-classes.html
-http://blog.hvidtfeldts.net/index.php/2012/08/reaction-diffusion-systems/
-http://www.algosome.com/articles/reaction-diffusion-gray-scott.html
-http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
-http://http.developer.nvidia.com/GPUGems/gpugems_ch38.html
-http://stackoverflow.com/questions/12469990/simple-glsl-convolution-shader-is-atrociously-slow
-https://www.reddit.com/r/proceduralgeneration/comments/4xz99n/reactiondiffusion_simulation_ive_made_in/d6kjywf
-http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/
-http://xissburg.com/faster-gaussian-blur-in-glsl/
+[1]  http://www.karlsims.com/rd.html
+[2]  http://mrob.com/pub/comp/xmorphia/
+[3]  http://mrob.com/pub/comp/xmorphia/pearson-classes.html
+[4]  http://blog.hvidtfeldts.net/index.php/2012/08/reaction-diffusion-systems/
+[5]  http://www.algosome.com/articles/reaction-diffusion-gray-scott.html
+[6]  http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+[7]  http://http.developer.nvidia.com/GPUGems/gpugems_ch38.html
+[8]  http://stackoverflow.com/questions/12469990/simple-glsl-convolution-shader-is-atrociously-slow
+[9]  https://www.reddit.com/r/proceduralgeneration/comments/4xz99n/reactiondiffusion_simulation_ive_made_in/d6kjywf
+[10] http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/
+[11] http://xissburg.com/faster-gaussian-blur-in-glsl/
+[12] http://developer.amd.com/resources/articles-whitepapers/tiled-convolution-fast-image-filtering/
+[13] http://elynxsdk.free.fr/ext-docs/Blur/Fast_box_blur.pdf
+[14] http://blog.ivank.net/fastest-gaussian-blur.html
+[15] https://en.wikipedia.org/wiki/Discrete_Laplace_operator (see Image Processing)
+[16] http://www.neilblevins.com/cg_education/reaction_diffusion_in_pshop/reaction_diffusion_in_pshop.htm
+[17] https://classes.soe.ucsc.edu/cmpe220/Winter06/source/helloGPGPU.cpp
+[18] http://math.stackexchange.com/questions/132183/laplacian-2d-kernel-is-it-separable
+[19] http://blogs.mathworks.com/steve/2006/10/04/separable-convolution/
+[20] http://blogs.mathworks.com/steve/2006/11/28/separable-convolution-part-2/
+[21] http://crsouza.com/2010/03/17/kernel-functions-for-machine-learning-applications/#laplacian
+
+
+
+=================================================================================================
+On optimization:
+We saved on time by moving the uv calculations from the fragment shader to the vertex shader, 
+which optimizes better on certain architectures. To further increase performance, we want to 
+reduce the number of texture reads as much as possible.
+
+
+3x3 gaussian convolution complexity
+-------------------------------------------------
+The Laplacian convolution is not seperable [18]. However, can we use the Gaussian function
+instead and get acceptable results? It works in the photoshop implementation [16], so why not here? If
+it doesn't work, we can sacrifice correctness for speed by switching to a five-point stencil
+from the current nine-point stencil. The following are some notes on the Gaussian convolution.
+
+Where x is resolution in the x direction,
+y is resolution in the y direction,
+c is the width of the convolution kernel,
+and we're using a test image of 512x512 with a 3x3 convolution kernel:
+
+The naive implementation has a complexity of
+    O( xy * c^2 )
+The number of operations on the test image is 2,359,296
+
+Break into two passes (one horizontal, one vertical) to reduce the complexity to
+    O( xy * 2c )
+The number of operations on the test image is 1,572,864
+This represents a 33% speed increase over the naive implementation.
+
+When you're using GL_LINEAR, you can sample between pixels to fetch the interpolated information for both.
+Using this trick we can can simplify it to
+    O( xy * 2(int(c / 2)) )
+The number of operations on the test image is 1,048,576
+This represents a 66% speed increase over the naive implementation.
+
+We could probably get away with only two texture reads for the image if we use two corners of the
+center pixel!
+
+The theoretical best-case performance is O(xy), or 262,144 operations [13]
+This represents an 89% speed increase over the naive implementation.
+
+
+3x3 gaussian:
+1 2 1
+2 4 2
+1 2 1
+
+Our laplacian:
+0.05 0.20 0.05
+0.20 -1.0 0.20
+0.05 0.20 0.05
+
+Standard laplacian (with diagonals):
+0.25 0.50 0.25
+0.50 -3.0 0.50
+0.25 0.50 0.25
+
+Standard Laplacian (no diagonals):
+0.00 1.00 0.00
+1.00 -4.0 1.00
+0.00 1.00 0.00
+
+Fragmentarium laplacian:
+https://github.com/Syntopia/Fragmentarium/blob/master/Fragmentarium-Source/Examples/2D%20Systems/Reaction-Diffusion.frag
+0.50 1.00 0.50
+1.00 -6.0 1.00
+0.50 1.00 0.50
+(seems to be the standard multiplied by two)
+
+
+The Laplacian is the second derivative of the Gaussian.
+
+Other way of doing it [16]:
+Highpass (6 Pixels)
+Threshold (Level 127)
+Gaussian Blur (9 Pixels)
