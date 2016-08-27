@@ -53,8 +53,7 @@ function ReactionDiffusionSimulator($container) {
 
         //Early out if we don't have WebGL
         if (!webgl_detect()) {
-            console.error("WebGL is not supported on this browser.");
-            return exit();
+            return exit("WebGL is not supported on this browser.");
         }
 
         renderer = new THREE.WebGLRenderer({
@@ -64,12 +63,10 @@ function ReactionDiffusionSimulator($container) {
 
         //Early out if we don't have the extensions we need
         if (!renderer.extensions.get("OES_texture_float")) {
-            console.error("No OES_texture_float support for float textures.");
-            return exit();
+            return exit("No OES_texture_float support for float textures.");
         }
         if (renderer.capabilities.maxVertexTextures === 0) {
-            console.error("No support for vertex shader textures.");
-            return exit();
+            return exit("No support for vertex shader textures.");
         }
 
         //Load shader strings from files
@@ -94,7 +91,10 @@ function ReactionDiffusionSimulator($container) {
         });
     })();
 
-    function exit(){
+    function exit(message){
+        if(message != null){
+            console.error(message);
+        }
         $container.append('<div class="no-webgl-support">\
                                 <p>Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</a>.\
                                 <br> Find out how to get it <a href="http://get.webgl.org/">here</a>.</p>\
@@ -150,8 +150,8 @@ function ReactionDiffusionSimulator($container) {
         resize(container.clientWidth, container.clientHeight);
 
         initRenderTargetFromImage(computeRenderTargets[0], 'bias-image.png');
-        //initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
-        //doRenderPass(0);
+        initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
+        //doRenderPass(1);
 //        applyFunctionToRenderTarget(computeRenderTargets[0], function (texture) {
 //            //Seed it with the variables we want
 //            //seedInitial(texture);
@@ -389,12 +389,6 @@ function ReactionDiffusionSimulator($container) {
     }
 
     var doRenderPass = function (time) {
-        //    var dt = (time - mLastTime)/20.0;
-        //    if(dt > 0.8 || dt<=0)
-        //        dt = 0.8;
-        //    mLastTime = time;
-        //    mUniforms.delta.value = dt;
-
         //Update uniforms
         var elapsedSeconds = (Date.now() - startTime) / 1000.0;
         displayMaterialUniforms.time.value = 60.0 * elapsedSeconds;
