@@ -29,5 +29,11 @@
             "feed":0.035,
             "kill":0.063,
             "biasStrength":0.01
+        },
+        {
+            "name":"NameplateFinal",
+            "feed":0.05,
+            "kill":0.061,
+            "biasStrength":0.007
         }
 ]

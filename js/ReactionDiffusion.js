@@ -149,8 +149,8 @@ function ReactionDiffusionSimulator($container) {
 
         resize(container.clientWidth, container.clientHeight);
 
-        initRenderTargetFromImage(computeRenderTargets[0], 'bias-image.png');
-        initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
+        initRenderTargetFromImage(computeRenderTargets[0], 'init-image.png');
+        initRenderTargetFromImage(computeRenderTargets[1], 'init-image.png');
         //doRenderPass(1);
 //        applyFunctionToRenderTarget(computeRenderTargets[0], function (texture) {
 //            //Seed it with the variables we want
@@ -375,11 +375,11 @@ function ReactionDiffusionSimulator($container) {
     var renderLoop = function (time) {
 
         if (mouseIsDown) {
-            //computeUniforms.interactPos.value = mousePos;
-            applyFunctionToRenderTarget(computeRenderTargets[currentTargetIndex], function(texture) {
-                seedCircle(texture, mousePos.x, mousePos.y, 25, 5);
-                //seedFilledCircle(texture, mousePos.x, mousePos.y, 25);
-            });
+            computeUniforms.interactPos.value = mousePos;
+//            applyFunctionToRenderTarget(computeRenderTargets[currentTargetIndex], function(texture) {
+//                seedCircle(texture, mousePos.x, mousePos.y, 25, 5);
+//                //seedFilledCircle(texture, mousePos.x, mousePos.y, 25);
+//            });
         }
 
         doRenderPass(time);
@@ -424,8 +424,8 @@ function ReactionDiffusionSimulator($container) {
     }
 
     function reset() {
-        initRenderTargetFromImage(computeRenderTargets[0], 'bias-image.png');
-        //initRenderTargetFromImage(computeRenderTargets[1], 'bias-image.png');
+        initRenderTargetFromImage(computeRenderTargets[0], 'init-image.png');
+        initRenderTargetFromImage(computeRenderTargets[1], 'init-image.png');
     }
 
 

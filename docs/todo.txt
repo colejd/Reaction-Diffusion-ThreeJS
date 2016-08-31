@@ -1,3 +1,5 @@
+Wavy look shader
+
 To Do:
 - Move name property out of preset objects and use as keys in JSON
 - Implement faster blur (http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/)

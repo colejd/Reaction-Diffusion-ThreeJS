@@ -160,11 +160,12 @@ void main() {
 
     //// Draw a circle around interactPos
     float newB = 0.0;
-    float droppedValue = 0.5; //Value placed within circle
+    float droppedValue = 1.0; //Value placed within circle
     float dist = distance(v_uv / texelSize, interactPos);
 
-    float distBranch = when_gt(dropperSize, dist);
-    newB = mix(final.g, droppedValue, distBranch);
+    float distBranch = when_lt(dist, dropperSize);
+    float innerDistBranch = when_gt(dist, dropperSize * 0.75);
+    newB = mix(final.g, droppedValue, distBranch * innerDistBranch);
 
     //Secondary "inner" brush
 //    float distBranchInner = when_lt(dist, dropperSize * 0.75);

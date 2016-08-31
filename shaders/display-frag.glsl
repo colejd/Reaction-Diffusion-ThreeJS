@@ -15,10 +15,17 @@ vec4 rainbow(vec2 uv){
     float center = 0.5; //0.5
     float width = 1.0; //0.5
     float frequency = 5.0;
-    float red   = sin(frequency*uv.x + 0.0) * width + center;
-    float green = sin(frequency*uv.x + 2.0*PI/3.0) * width + center;
-    float blue  = sin(frequency*uv.x + 4.0*PI/3.0) * width + center;
-    return vec4(red, green, blue, 1.0);
+    float r1 = sin(frequency*uv.x + 0.0) * width + center;
+    float g1 = sin(frequency*uv.x + 2.0*PI/3.0) * width + center;
+    float b1 = sin(frequency*uv.x + 4.0*PI/3.0) * width + center;
+
+    return vec4 (r1, g1, b1, 1.0);
+
+//    float r2 = sin(frequency*uv.y + 0.0) * width + center;
+//    float g2 = sin(frequency*uv.y + 2.0*PI/3.0) * width + center;
+//    float b2 = sin(frequency*uv.y + 4.0*PI/3.0) * width + center;
+//
+//    return vec4(vec3(r1, g1, b1) * vec3(r2, g2, b2), 1.0);
 }
 
 //http://theorangeduck.com/page/avoiding-shader-conditionals
@@ -59,11 +66,9 @@ void main() {
 //    float highPassBranch = clamp(sign(c - highPassThreshold), 0.0, 1.0);
 //    c = mix(0.0, c, highPassBranch);
 
-    //vec4 tint = vec4(1.0, 0.7294, 0.302, 1.0); //Firefly red
-    vec4 tint = vec4(1.0, 1.0, 1.0, 1.0);
-    vec4 finalColor = vec4(c, c, c, 1.0) * tint;
+    vec4 finalColor = vec4(c, c, c, 1.0);
 
-//    //Static effect on blue pixels for no reason
+      //Static effect on blue pixels for no reason
 //    float noise = rando(uv.xy * time);
 //    //add noise value to c if pixel.b > 0
 //    float blueBranch = when_gt(pixel.b, 0.5);
@@ -81,8 +86,11 @@ void main() {
 //    float gBranch = when_gt(pixel.g, 0.01);
 //    finalColor = mix(finalColor, finalColor - rain, gBranch);
 
+    //vec4 tint = vec4(0.5, 0.0, 1.0, 1.0); //Firefly red
+    vec4 tint = vec4(1.0, 1.0, 1.0, 1.0);
+
     //Apply the final color
-    gl_FragColor = finalColor;
+    gl_FragColor = finalColor * tint;
 
     //Test (passthrough)
     //gl_FragColor = pixel.rgba;
