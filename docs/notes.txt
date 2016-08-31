@@ -95,7 +95,6 @@ https://github.com/Syntopia/Fragmentarium/blob/master/Fragmentarium-Source/Examp
 
 Sobel/Prewitt are first order derivative operators (measure slope). Laplace is second order (measures change in slope).
 
-
 Other way of doing it [16]:
 Highpass (6 Pixels)
 Threshold (Level 127)
