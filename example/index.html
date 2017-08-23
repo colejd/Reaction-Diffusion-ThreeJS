@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+
+<head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Reaction-Diffusion Simulator</title>
+
+    <!-- Page styles  -->
+    <style>
+        body {
+            font-family: Monospace;
+            background-color: #1f1f1f;
+            color: #fff;
+            margin: 0px;
+            overflow: hidden;
+        }
+        .info {
+            color: #fff;
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            display:block;
+            pointer-events: none;
+        }
+        .info a{ color: #ff0; font-weight: bold; text-decoration: underline; cursor: pointer; pointer-events: initial; }
+    </style>
+
+    <!-- Plugin styles  -->
+    <style>
+        #reaction-diffusion-container {
+            max-width: 512px;
+            max-height: 512px;
+            width: 90vw;
+            height: 90vw;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 3em;
+            position: relative;
+        }
+    </style>
+
+    <!-- Bring in GUI library -->
+    <script src="https://unpkg.com/guify"></script>
+
+</head>
+
+
+<body>
+    <p style="text-align: center; margin-top: 2em">Epilepsy Warning</p>
+
+    <div id="reaction-diffusion-container"></div>  
+    <script src="../dist/reaction-diffusion.js"></script>
+
+</body>
+
+
+
+</html>
