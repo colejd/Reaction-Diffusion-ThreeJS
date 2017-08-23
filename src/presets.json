@@ -1,0 +1,68 @@
+
+{
+
+    "Coral": {
+        "feed": 0.0545,
+        "kill": 0.062,
+        "biasStrength": 0
+    },
+
+    "Culture": {
+        "feed":0.082,
+        "kill":0.06,
+        "biasStrength":0
+    },
+
+    "Bacteria": {
+        "feed":0.078,
+        "kill":0.061,
+        "biasStrength":0
+    },
+
+    "Mitosis": {
+        "feed":0.0367,
+        "kill":0.0649,
+        "biasStrength":0
+    },
+
+    "Moving": {
+        "feed":0.073,
+        "kill":0.061,
+        "biasStrength":0
+    },
+
+    "Radial": {
+        "feed":0.039,
+        "kill":0.059,
+        "biasStrength":0
+    },
+
+    "Pulsating": {
+        "feed":0.026,
+        "kill":0.059,
+        "biasStrength":0
+    },
+    
+    "Psychedelic": {
+        "feed":0.025,
+        "kill":0.051,
+        "biasStrength":0
+    },
+    "Moving Squigglies": {
+        "feed":0.012,
+        "kill":0.051,
+        "biasStrength":0
+    },
+
+    "Ripples": {
+        "feed":0.01,
+        "kill":0.044,
+        "biasStrength":0
+    },
+    
+    "Turbulence": {
+        "feed":0.003,
+        "kill":0.022,
+        "biasStrength":0
+    }
+}

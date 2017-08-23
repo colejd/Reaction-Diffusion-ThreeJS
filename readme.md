@@ -9,5 +9,5 @@ This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) fo
 
 ## Acknowledgments
 
-* Daniel Shiffman - [Coding Rainbow](codingrainbow.com) (see https://www.youtube.com/watch?v=BV9ny785UNc)
-* [Pmneila's "jsexp" project on GitHub](https://github.com/pmneila/jsexp) - Indispensable as a benchmark and learning resource for Three.js
+* Daniel Shiffman - [The Coding Train](http://thecodingtrain.com/) (see https://www.youtube.com/watch?v=BV9ny785UNc)
+* [jsexp by Pmneila](https://github.com/pmneila/jsexp) - Indispensable as a benchmark and learning resource for Three.js

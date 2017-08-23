@@ -99,7 +99,7 @@ void main() {
     //gl_FragColor = vec4(c, c, pixel.b, 1.0);
 
     //Test grid
-//    float x = mod(time + gl_FragCoord.x, 100.) < 50. ? 1. : 0.;
-//    float y = mod(time + gl_FragCoord.y, 100.) < 50. ? 1. : 0.;
-//    gl_FragColor = vec4(vec3(min(x, y)), 1.); //*= for passthrough
+  //  float x = mod(time + gl_FragCoord.x, 100.) < 50. ? 1. : 0.;
+  //  float y = mod(time + gl_FragCoord.y, 100.) < 50. ? 1. : 0.;
+  //  gl_FragColor = vec4(vec3(min(x, y)), 1.); //*= for passthrough
 }
