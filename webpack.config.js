@@ -13,7 +13,7 @@ let libraryName = package.name;
 let plugins = [], outputFile;
 
 if (env === 'build') {
-  plugins.push(new UglifyJsPlugin({ minimize: true }));
+  //plugins.push(new UglifyJsPlugin({ minimize: true }));
   outputFile = libraryName + '.min.js';
 } else {
   outputFile = libraryName + '.js';
@@ -39,7 +39,7 @@ const config = {
             options: {
               outputPath: 'resources/',
               name: '[name].[ext]',
-              publicPath: '/dist/'
+              publicPath: env === 'build' ? 'dist/' : '/dist/'
             }  
           }
         ]
