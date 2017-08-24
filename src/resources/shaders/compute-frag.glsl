@@ -119,7 +119,7 @@ vec4 react(vec4 pixel, vec4 convolution, float da, float db) {
 
     float deltaB = (db * convolution.g) //Diffusion term
                     + reactionRate //Reaction rate
-                    - ((feed + kill) * b); //Diminishment term, scaled so b >= 0, must not be greater than replenishment
+                    - (((kill + feed) - (c * biasStrength)) * b); //Diminishment term, scaled so b >= 0, must not be greater than replenishment
                     //- ((kill + feed) * b);
 
     float finalB = b + (deltaB * timestep);

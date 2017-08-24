@@ -14,7 +14,7 @@
 // http://mrob.com/pub/comp/xmorphia/
 
 varying vec2 v_uv;
-varying vec2 v_uvs[9];
+varying vec2 v_uvs[5];
 
 uniform sampler2D sourceTexture;
 uniform vec2 resolution;
@@ -66,11 +66,6 @@ vec4 laplace9Point_Sims(vec4 centerPixel) {
     result += texture2D( sourceTexture, v_uvs[2] ) * 0.2;
     result += texture2D( sourceTexture, v_uvs[3] ) * 0.2;
     result += texture2D( sourceTexture, v_uvs[4] ) * 0.2;
-    //Diagonal texels
-    result += texture2D( sourceTexture, v_uvs[5] ) * 0.05;
-    result += texture2D( sourceTexture, v_uvs[6] ) * 0.05;
-    result += texture2D( sourceTexture, v_uvs[7] ) * 0.05;
-    result += texture2D( sourceTexture, v_uvs[8] ) * 0.05;
 
     return result;
 }
@@ -87,11 +82,6 @@ vec4 laplace9Point(vec4 centerPixel) {
     result += texture2D( sourceTexture, v_uvs[2] );
     result += texture2D( sourceTexture, v_uvs[3] );
     result += texture2D( sourceTexture, v_uvs[4] );
-    //Diagonal texels
-    result += texture2D( sourceTexture, v_uvs[5] ) * 0.5;
-    result += texture2D( sourceTexture, v_uvs[6] ) * 0.5;
-    result += texture2D( sourceTexture, v_uvs[7] ) * 0.5;
-    result += texture2D( sourceTexture, v_uvs[8] ) * 0.5;
 
     return result;
 }
@@ -129,7 +119,7 @@ vec4 react(vec4 pixel, vec4 convolution, float da, float db) {
 
     float deltaB = (db * convolution.g) //Diffusion term
                     + reactionRate //Reaction rate
-                    - (((kill + feed) - (c * biasStrength)) * b); //Diminishment term, scaled so b >= 0, must not be greater than replenishment
+                    - ((feed + kill) * b); //Diminishment term, scaled so b >= 0, must not be greater than replenishment
                     //- ((kill + feed) * b);
 
     float finalB = b + (deltaB * timestep);
@@ -160,7 +150,7 @@ void main() {
 
     //// Draw a circle around interactPos
     float newB = 0.0;
-    float droppedValue = 1.0; //Value placed within circle
+    float droppedValue = 0.9; //Value placed within circle
     float dist = distance(v_uv / texelSize, interactPos);
 
     float distBranch = when_lt(dist, dropperSize);
@@ -178,10 +168,10 @@ void main() {
     //// Apply the final color
     gl_FragColor = final * doPass;
 
-    //// Destroy any chemicals near the border (oh, my)
-    if(gl_FragCoord.x == 0.5 || gl_FragCoord.y == 0.5 || gl_FragCoord.x == resolution.x - 0.5 || gl_FragCoord.y == resolution.y - 0.5){
-        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    }
+    //// Destroy any chemicals near the border
+    // if(gl_FragCoord.x == 0.5 || gl_FragCoord.y == 0.5 || gl_FragCoord.x == resolution.x - 0.5 || gl_FragCoord.y == resolution.y - 0.5){
+    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    // }
 
 
     //// Optionally do test stuff
