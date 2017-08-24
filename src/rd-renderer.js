@@ -19,7 +19,7 @@ export class ReactionDiffusionRenderer {
         this.computeStepsPerFrame = 16;
         this.currentTargetIndex = 0;
         // Use half float type if on mobile (iOS in particular)
-        this.imageType = (Detector.IsMobile() && !this.renderer.extensions.get("WEBGL_color_buffer_float")) ? THREE.HalfFloatType : THREE.FloatType;
+        this.imageType = THREE.FloatType;
 
     }
 
@@ -38,19 +38,23 @@ export class ReactionDiffusionRenderer {
             preserveDrawingBuffer: true
         });
 
+        // Use half float type if on mobile (iOS in particular)
+        if (Detector.IsMobile() && !this.renderer.extensions.get("WEBGL_color_buffer_float"))
+            this.imageType = THREE.HalfFloatType;
+
         // Check for the GL extensions we need to run
-        // if (!this.renderer.extensions.get("OES_texture_float")) {
-        //     throw new Error("System does not support OES_texture_float!");
-        // }
-        // if (this.renderer.capabilities.maxVertexTextures === 0) {
-        //     throw new Error("System does not support vertex shader textures!");
-        // }
-        // if (!this.renderer.extensions.get("OES_texture_float_linear")){
-        //     throw new Error("System does not support OES_texture_float_linear!");
-        // }
-        // if (this.renderer.capabilities.maxVaryings < 5){
-        //     throw new Error("System does not support the number of varying vectors (>= 5) needed to function!");
-        // }
+        if (!this.renderer.extensions.get("OES_texture_float")) {
+            throw new Error("System does not support OES_texture_float!");
+        }
+        if (this.renderer.capabilities.maxVertexTextures === 0) {
+            throw new Error("System does not support vertex shader textures!");
+        }
+        if (!this.renderer.extensions.get("OES_texture_float_linear")){
+            throw new Error("System does not support OES_texture_float_linear!");
+        }
+        if (this.renderer.capabilities.maxVaryings < 5){
+            throw new Error("System does not support the number of varying vectors (>= 5) needed to function!");
+        }
 
         this.renderer.setSize(width, height);
         this.renderer.setClearColor(0x00ffff, 1); //Cyan clear color
