@@ -58,8 +58,11 @@ void main() {
 
     //White on black
     //If r has no value then render as black
-    float start = 1.0 * when_gt(pixel.r, 0.0);
-    float c = clamp(start - (pixel.r - pixel.g), 0.0, 1.0); //a - b adds a bit of thickness to the center of blobs
+    //float start = 1.0 * when_gt(pixel.r, 0.0);
+    //float c = clamp(start - (pixel.r - pixel.g), 0.0, 1.0); //a - b adds a bit of thickness to the center of blobs
+
+    // Black on white
+    float c = pixel.r - pixel.g;
 
     //High pass threshold
 //    float highPassThreshold = 0.5;

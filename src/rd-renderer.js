@@ -18,7 +18,6 @@ export class ReactionDiffusionRenderer {
         this.computeRenderTargets = [];
         this.computeStepsPerFrame = 16;
         this.currentTargetIndex = 0;
-        // Use half float type if on mobile (iOS in particular)
         this.imageType = THREE.FloatType;
 
     }
