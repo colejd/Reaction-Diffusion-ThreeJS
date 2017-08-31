@@ -13,7 +13,7 @@ import { baseVertexShader, baseFragmentShader } from './utils/shaders.js';
 export class ReactionDiffusionRenderer {
     constructor() {
         this.filterType = THREE.LinearFilter; //THREE.NearestFilter
-        this.internalResolutionMultiplier = 1.0;
+        this.internalResolutionMultiplier = 0.5;
 
         this.computeRenderTargets = [];
         this.computeStepsPerFrame = 16;
@@ -47,7 +47,7 @@ export class ReactionDiffusionRenderer {
         }
 
         // Use half float type if on mobile (iOS in particular)
-        if (Detector.IsMobile() && !this.renderer.extensions.get("OES_texture_float") && !this.renderer.extensions.get("WEBGL_color_buffer_float")) {
+        if (Detector.IsMobile() && !this.renderer.extensions.get("WEBGL_color_buffer_float")) {
             if (!this.renderer.extensions.get("OES_texture_half_float")) {
                 throw new Error("System does not support OES_texture_float!");
             }
