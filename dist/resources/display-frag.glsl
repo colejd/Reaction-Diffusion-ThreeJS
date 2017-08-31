@@ -1,3 +1,10 @@
+// Reaction-diffusion simulation
+// By Jonathan Cole
+//
+// This shader transforms the color output from compute-frag
+// into something nicer to look at.
+// 
+
 #define PI 3.1415926535897932384626433832795
 
 varying vec2 v_uv;
@@ -56,35 +63,35 @@ void main() {
 
     //// Determine final color
 
-    //White on black
-    //If r has no value then render as black
+    // White on black
+    // If r has no value then render as black
     //float start = 1.0 * when_gt(pixel.r, 0.0);
     //float c = clamp(start - (pixel.r - pixel.g), 0.0, 1.0); //a - b adds a bit of thickness to the center of blobs
 
     // Black on white
     float c = pixel.r - pixel.g;
 
-    //High pass threshold
+    // High pass threshold
 //    float highPassThreshold = 0.5;
 //    float highPassBranch = clamp(sign(c - highPassThreshold), 0.0, 1.0);
 //    c = mix(0.0, c, highPassBranch);
 
     vec4 finalColor = vec4(c, c, c, 1.0);
 
-      //Static effect on blue pixels for no reason
+      // Static effect on blue pixels for no reason
 //    float noise = rando(uv.xy * time);
-//    //add noise value to c if pixel.b > 0
+//    // Add noise value to c if pixel.b > 0
 //    float blueBranch = when_gt(pixel.b, 0.5);
 //    float newC = mix(c, c + noise, blueBranch);
 //    finalColor = vec4(newC, newC, newC, 1.0);
 
-    //Throw in some static wherever we have some B (green)
+    // Throw in some static wherever we have some B (green)
 //    float noise = rando(uv.xy + (time * 0.005));
 //    float gBranch = when_gt(pixel.g, 0.0);
 //    float newC = mix(c, c - noise, gBranch);
 //    finalColor = vec4(newC, newC, newC, 1.0);
 
-    //Replace B with rainbow
+    // Replace B with rainbow
 //    vec4 rain = rainbow(uv.xy + (time * 0.005));
 //    float gBranch = when_gt(pixel.g, 0.01);
 //    finalColor = mix(finalColor, finalColor - rain, gBranch);
@@ -95,13 +102,13 @@ void main() {
     //Apply the final color
     gl_FragColor = finalColor * tint;
 
-    //Test (passthrough)
+    // Test (passthrough)
     //gl_FragColor = pixel.rgba;
 
-    //Test (same as final result but display bias field as blue)
+    // Test (same as final result but display bias field as blue)
     //gl_FragColor = vec4(c, c, pixel.b, 1.0);
 
-    //Test grid
+    // Test grid
   //  float x = mod(time + gl_FragCoord.x, 100.) < 50. ? 1. : 0.;
   //  float y = mod(time + gl_FragCoord.y, 100.) < 50. ? 1. : 0.;
   //  gl_FragColor = vec4(vec3(min(x, y)), 1.); //*= for passthrough

@@ -13,7 +13,7 @@ import { baseVertexShader, baseFragmentShader } from './utils/shaders.js';
 export class ReactionDiffusionRenderer {
     constructor() {
         this.filterType = THREE.LinearFilter; //THREE.NearestFilter
-        this.internalResolutionMultiplier = 0.5;
+        this.internalResolutionMultiplier = 1.0;
 
         this.computeRenderTargets = [];
         this.computeStepsPerFrame = 16;
@@ -37,22 +37,42 @@ export class ReactionDiffusionRenderer {
             preserveDrawingBuffer: true
         });
 
-        // Use half float type if on mobile (iOS in particular)
-        if (Detector.IsMobile() && !this.renderer.extensions.get("WEBGL_color_buffer_float"))
-            this.imageType = THREE.HalfFloatType;
 
         // Check for the GL extensions we need to run
-        if (!this.renderer.extensions.get("OES_texture_float")) {
-            throw new Error("System does not support OES_texture_float!");
-        }
         if (this.renderer.capabilities.maxVertexTextures === 0) {
             throw new Error("System does not support vertex shader textures!");
         }
-        if (!this.renderer.extensions.get("OES_texture_float_linear")){
-            throw new Error("System does not support OES_texture_float_linear!");
-        }
         if (this.renderer.capabilities.maxVaryings < 5){
             throw new Error("System does not support the number of varying vectors (>= 5) needed to function!");
+        }
+
+        // Use half float type if on mobile (iOS in particular)
+        if (Detector.IsMobile() && !this.renderer.extensions.get("OES_texture_float") && !this.renderer.extensions.get("WEBGL_color_buffer_float")) {
+            if (!this.renderer.extensions.get("OES_texture_half_float")) {
+                throw new Error("System does not support OES_texture_float!");
+            }
+
+            if (!this.renderer.extensions.get("OES_texture_half_float_linear")){
+                //throw new Error("System does not support OES_texture_float_linear!");
+                console.log("Using nearest neighbor filtering");
+                this.filterType = THREE.NearestFilter;
+            }
+            
+            console.log("Using half float textures");
+            this.imageType = THREE.HalfFloatType;
+        }
+        // Otherwise check for the extensions needed for this platform
+        else {
+            if (!this.renderer.extensions.get("OES_texture_float")) {
+                throw new Error("System does not support OES_texture_float!");
+            }
+
+            if (!this.renderer.extensions.get("OES_texture_float_linear")){
+                //throw new Error("System does not support OES_texture_float_linear!");
+                console.log("Using nearest neighbor filtering");
+                this.filterType = THREE.NearestFilter;
+            }
+
         }
 
         this.renderer.setSize(width, height);
@@ -109,7 +129,7 @@ export class ReactionDiffusionRenderer {
         let preset = presets[presetName];
         this.computeUniforms.feed.value = preset.feed;
         this.computeUniforms.kill.value = preset.kill;
-        this.computeUniforms.biasStrength = preset.biasStrength;
+        this.computeUniforms.biasStrength.value = preset.biasStrength;
     }
 
     Clear() {
@@ -150,8 +170,8 @@ export class ReactionDiffusionRenderer {
                 format: THREE.RGBAFormat,
                 type: this.imageType
             });
-            newTarget.texture.wrapS = THREE.RepeatWrapping;
-            newTarget.texture.wrapT = THREE.RepeatWrapping;
+            newTarget.texture.wrapS = THREE.RepeatWrapping;//THREE.RepeatWrapping;
+            newTarget.texture.wrapT = THREE.RepeatWrapping;//THREE.RepeatWrapping;
             newTarget.texture.name = `render texture ${i}`;
             this.computeRenderTargets.push(newTarget);
         }
@@ -206,6 +226,14 @@ export class ReactionDiffusionRenderer {
             kill: {
                 type: "f",
                 value: 0.064
+            },
+            da: {
+                type: "f",
+                value: 0.2097
+            },
+            db: {
+                type: "f",
+                value: 0.105
             },
             biasStrength: {
                 type: "f",

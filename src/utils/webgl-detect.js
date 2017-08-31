@@ -30,15 +30,15 @@ class Detector {
         return false;
     }
 
-    static GetErrorHTML(message = null){
-        if(message == null){
-            message = `Your graphics card does not seem to support 
-                        <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</a>. <br>
-                        Find out how to get it <a href="http://get.webgl.org/">here</a>.`;
-        }
+    static GetErrorHTML(details){
+        var message = `WebGL error: ${details}`;
+
+
         return `
         <div class="no-webgl-support">
-        <p style="text-align: center;">${message}</p>
+            <p style="text-align: center;">
+                ${message}
+            </p>
         </div>
         `
     }

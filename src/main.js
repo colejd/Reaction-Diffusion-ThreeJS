@@ -18,7 +18,7 @@ let Init = () => {
             gui.Init(rd, container);
         }).catch(error => {
             console.error(error);
-            container.innerHTML = Detector.GetErrorHTML();
+            container.innerHTML = Detector.GetErrorHTML(error);
             container.classList.add("no-webgl");
         });
     }

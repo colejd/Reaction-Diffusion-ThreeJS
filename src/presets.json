@@ -1,6 +1,10 @@
 
 {
-
+    "jsexp": {
+        "feed": 0.037,
+        "kill": 0.06,
+        "biasStrength": 0
+    },
     "Coral": {
         "feed": 0.0545,
         "kill": 0.062,

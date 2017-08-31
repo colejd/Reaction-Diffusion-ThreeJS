@@ -3415,13 +3415,10 @@ var Detector = function () {
         }
     }, {
         key: "GetErrorHTML",
-        value: function GetErrorHTML() {
-            var message = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+        value: function GetErrorHTML(details) {
+            var message = "WebGL error: " + details;
 
-            if (message == null) {
-                message = "Your graphics card does not seem to support \n                        <a href=\"http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation\">WebGL</a>. <br>\n                        Find out how to get it <a href=\"http://get.webgl.org/\">here</a>.";
-            }
-            return "\n        <div class=\"no-webgl-support\">\n        <p style=\"text-align: center;\">" + message + "</p>\n        </div>\n        ";
+            return "\n        <div class=\"no-webgl-support\">\n            <p style=\"text-align: center;\">\n                " + message + "\n            </p>\n        </div>\n        ";
         }
     }]);
     return Detector;
@@ -3515,7 +3512,7 @@ module.exports = function (it) {
 /* 133 */
 /***/ (function(module, exports) {
 
-module.exports = {"Coral":{"feed":0.0545,"kill":0.062,"biasStrength":0},"Culture":{"feed":0.082,"kill":0.06,"biasStrength":0},"Bacteria":{"feed":0.078,"kill":0.061,"biasStrength":0},"Mitosis":{"feed":0.0367,"kill":0.0649,"biasStrength":0},"Moving":{"feed":0.073,"kill":0.061,"biasStrength":0},"Radial":{"feed":0.039,"kill":0.059,"biasStrength":0},"Pulsating":{"feed":0.026,"kill":0.059,"biasStrength":0},"Psychedelic":{"feed":0.025,"kill":0.051,"biasStrength":0},"Moving Squigglies":{"feed":0.012,"kill":0.051,"biasStrength":0},"Ripples":{"feed":0.01,"kill":0.044,"biasStrength":0},"Turbulence":{"feed":0.003,"kill":0.022,"biasStrength":0}}
+module.exports = {"jsexp":{"feed":0.037,"kill":0.06,"biasStrength":0},"Coral":{"feed":0.0545,"kill":0.062,"biasStrength":0},"Culture":{"feed":0.082,"kill":0.06,"biasStrength":0},"Bacteria":{"feed":0.078,"kill":0.061,"biasStrength":0},"Mitosis":{"feed":0.0367,"kill":0.0649,"biasStrength":0},"Moving":{"feed":0.073,"kill":0.061,"biasStrength":0},"Radial":{"feed":0.039,"kill":0.059,"biasStrength":0},"Pulsating":{"feed":0.026,"kill":0.059,"biasStrength":0},"Psychedelic":{"feed":0.025,"kill":0.051,"biasStrength":0},"Moving Squigglies":{"feed":0.012,"kill":0.051,"biasStrength":0},"Ripples":{"feed":0.01,"kill":0.044,"biasStrength":0},"Turbulence":{"feed":0.003,"kill":0.022,"biasStrength":0}}
 
 /***/ }),
 /* 134 */
@@ -48992,7 +48989,7 @@ var Init = function Init() {
             _gui.gui.Init(rd, container);
         }).catch(function (error) {
             console.error(error);
-            container.innerHTML = _webglDetect.Detector.GetErrorHTML();
+            container.innerHTML = _webglDetect.Detector.GetErrorHTML(error);
             container.classList.add("no-webgl");
         });
     }
@@ -49073,7 +49070,7 @@ var GUI = function () {
                 console.log("Guify was not found! Include it on the page to show the GUI for this program.");
             }
 
-            this.panel = new guify.GUI({
+            this.panel = new guify({
                 title: 'Reaction-Diffusion Simulator',
                 theme: 'dark',
                 root: container,
@@ -49511,7 +49508,7 @@ var ReactionDiffusionRenderer = exports.ReactionDiffusionRenderer = function () 
         (0, _classCallCheck3.default)(this, ReactionDiffusionRenderer);
 
         this.filterType = THREE.LinearFilter; //THREE.NearestFilter
-        this.internalResolutionMultiplier = 0.5;
+        this.internalResolutionMultiplier = 1.0;
 
         this.computeRenderTargets = [];
         this.computeStepsPerFrame = 16;
@@ -49540,22 +49537,41 @@ var ReactionDiffusionRenderer = exports.ReactionDiffusionRenderer = function () 
                 preserveDrawingBuffer: true
             });
 
-            // Use half float type if on mobile (iOS in particular)
-            if (_webglDetect.Detector.IsMobile() && !this.renderer.extensions.get("WEBGL_color_buffer_float")) this.imageType = THREE.HalfFloatType;
-
             // Check for the GL extensions we need to run
-            if (!this.renderer.extensions.get("OES_texture_float")) {
-                throw new Error("System does not support OES_texture_float!");
-            }
             if (this.renderer.capabilities.maxVertexTextures === 0) {
                 throw new Error("System does not support vertex shader textures!");
-            }
-            if (!this.renderer.extensions.get("OES_texture_float_linear")) {
-                throw new Error("System does not support OES_texture_float_linear!");
             }
             if (this.renderer.capabilities.maxVaryings < 5) {
                 throw new Error("System does not support the number of varying vectors (>= 5) needed to function!");
             }
+
+            // Use half float type if on mobile (iOS in particular)
+            if (_webglDetect.Detector.IsMobile() && !this.renderer.extensions.get("OES_texture_float") && !this.renderer.extensions.get("WEBGL_color_buffer_float")) {
+                if (!this.renderer.extensions.get("OES_texture_half_float")) {
+                    throw new Error("System does not support OES_texture_float!");
+                }
+
+                if (!this.renderer.extensions.get("OES_texture_half_float_linear")) {
+                    //throw new Error("System does not support OES_texture_float_linear!");
+                    console.log("Using nearest neighbor filtering");
+                    this.filterType = THREE.NearestFilter;
+                }
+
+                console.log("Using half float textures");
+                this.imageType = THREE.HalfFloatType;
+            }
+            // Otherwise check for the extensions needed for this platform
+            else {
+                    if (!this.renderer.extensions.get("OES_texture_float")) {
+                        throw new Error("System does not support OES_texture_float!");
+                    }
+
+                    if (!this.renderer.extensions.get("OES_texture_float_linear")) {
+                        //throw new Error("System does not support OES_texture_float_linear!");
+                        console.log("Using nearest neighbor filtering");
+                        this.filterType = THREE.NearestFilter;
+                    }
+                }
 
             this.renderer.setSize(width, height);
             this.renderer.setClearColor(0x00ffff, 1); //Cyan clear color
@@ -49612,7 +49628,7 @@ var ReactionDiffusionRenderer = exports.ReactionDiffusionRenderer = function () 
             var preset = _presets2.default[presetName];
             this.computeUniforms.feed.value = preset.feed;
             this.computeUniforms.kill.value = preset.kill;
-            this.computeUniforms.biasStrength = preset.biasStrength;
+            this.computeUniforms.biasStrength.value = preset.biasStrength;
         }
     }, {
         key: 'Clear',
@@ -49657,8 +49673,8 @@ var ReactionDiffusionRenderer = exports.ReactionDiffusionRenderer = function () 
                     format: THREE.RGBAFormat,
                     type: this.imageType
                 });
-                newTarget.texture.wrapS = THREE.RepeatWrapping;
-                newTarget.texture.wrapT = THREE.RepeatWrapping;
+                newTarget.texture.wrapS = THREE.RepeatWrapping; //THREE.RepeatWrapping;
+                newTarget.texture.wrapT = THREE.RepeatWrapping; //THREE.RepeatWrapping;
                 newTarget.texture.name = 'render texture ' + i;
                 this.computeRenderTargets.push(newTarget);
             }
@@ -49713,6 +49729,14 @@ var ReactionDiffusionRenderer = exports.ReactionDiffusionRenderer = function () 
                 kill: {
                     type: "f",
                     value: 0.064
+                },
+                da: {
+                    type: "f",
+                    value: 0.2097
+                },
+                db: {
+                    type: "f",
+                    value: 0.105
                 },
                 biasStrength: {
                     type: "f",
