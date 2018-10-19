@@ -2,7 +2,7 @@
 
 This project is a [three.js](threejs.org)-based GPGPU simulation of chemicals reacting and diffusing on a 2D plane based on the [Gray-Scott model](https://groups.csail.mit.edu/mac/projects/amorphous/GrayScott/).
 
-Demo at [joncole.me/pages/reaction-diffusion](http://www.joncole.me/pages/reaction-diffusion).
+Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects/reaction-diffusion).
 
 ## License
 
