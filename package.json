@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack --env build",
     "build_prod": "webpack --env build",
-    "build_dev": "webpack --env dev  --progress --color",
+    "build_dev": "webpack --env dev --color",
     "dev:watch": "npm run-script build_dev && webpack serve --env dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
