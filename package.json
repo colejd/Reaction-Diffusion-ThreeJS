@@ -1,12 +1,13 @@
 {
   "name": "reaction-diffusion",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "GPGPU simulation of various Reaction-Diffusion systems",
   "main": "src/main.js",
   "scripts": {
     "build": "webpack --env build",
-    "dev": "webpack --env dev --progress --color",
-    "dev:watch": "npm run-script dev && webpack serve",
+    "build_prod": "webpack --env build",
+    "build_dev": "webpack --env dev  --progress --color",
+    "dev:watch": "npm run-script build_dev && webpack serve --env dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jonathan Cole",
