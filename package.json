@@ -4,8 +4,8 @@
   "description": "GPGPU simulation of various Reaction-Diffusion systems",
   "main": "src/main.js",
   "scripts": {
-    "build": "webpack --env build --mode=production",
-    "dev": "webpack --env dev --mode=development --progress --color",
+    "build": "webpack --env build",
+    "dev": "webpack --env dev --progress --color",
     "dev:watch": "npm run-script dev && webpack serve",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

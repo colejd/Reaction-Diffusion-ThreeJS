@@ -37,42 +37,28 @@ export class ReactionDiffusionRenderer {
             preserveDrawingBuffer: true
         });
 
+        // Check for WebGL support needed for the program to run
+        this.CheckWebGLSupport();
 
-        // Check for the GL extensions we need to run
-        if (this.renderer.capabilities.maxVertexTextures === 0) {
-            throw new Error("System does not support vertex shader textures!");
-        }
-        if (this.renderer.capabilities.maxVaryings < 5){
-            throw new Error("System does not support the number of varying vectors (>= 5) needed to function!");
-        }
+        // Configure renderer based on available texture float precision
+        if (this.DetectTextureFloat()) {
+            console.log("Using full-precision float textures");
+            this.imageType = THREE.FloatType;
 
-        // Use half float type if on mobile (iOS in particular)
-        if (Detector.IsMobile() && !this.renderer.extensions.get("WEBGL_color_buffer_float")) {
-            if (!this.renderer.extensions.get("OES_texture_half_float")) {
-                throw new Error("System does not support OES_texture_float!");
-            }
-
-            if (!this.renderer.extensions.get("OES_texture_half_float_linear")){
-                //throw new Error("System does not support OES_texture_float_linear!");
-                console.log("Using nearest neighbor filtering");
+            if (!this.renderer.extensions.get("OES_texture_float_linear")) {
+                console.log("OES_texture_float_linear not supported. Falling back on nearest-neighbor filtering.");
                 this.filterType = THREE.NearestFilter;
             }
-            
-            console.log("Using half float textures");
+        } else if (this.DetectTextureHalfFloat()) {
+            console.log("Using half-precision float textures");
             this.imageType = THREE.HalfFloatType;
-        }
-        // Otherwise check for the extensions needed for this platform
-        else {
-            if (!this.renderer.extensions.get("OES_texture_float")) {
-                throw new Error("System does not support OES_texture_float!");
-            }
 
-            if (!this.renderer.extensions.get("OES_texture_float_linear")){
-                //throw new Error("System does not support OES_texture_float_linear!");
-                console.log("Using nearest neighbor filtering");
+            if (!this.renderer.extensions.get("OES_texture_half_float_linear")) {
+                console.log("OES_texture_half_float_linear not supported. Falling back on nearest-neighbor filtering.");
                 this.filterType = THREE.NearestFilter;
             }
-
+        } else {
+            throw new Error("WebGL context does not support float textures!");
         }
 
         this.renderer.setSize(width, height);
@@ -97,6 +83,41 @@ export class ReactionDiffusionRenderer {
 
     }
 
+    CheckWebGLSupport() {
+        // Check for the GL extensions we need to run
+        if (this.renderer.capabilities.maxVertexTextures === 0) {
+            throw new Error("System does not support vertex shader textures!");
+        }
+        if (this.renderer.capabilities.maxVaryings < 5) {
+            throw new Error("System does not support the number of varying vectors (>= 5) needed to function!");
+        }
+
+        // Detect color_buffer_float support
+        // if (this.renderer.capabilities.isWebGL2 && !this.renderer.extensions.get("EXT_color_buffer_float")) {
+        //     throw new Error("WebGL 2 context does not support EXT_color_buffer_float!");
+        // } else if (!this.renderer.extensions.get("WEBGL_color_buffer_float")) {
+        //     throw new Error("WebGL 1 context does not support WEBGL_color_buffer_float!");
+        // }
+    }
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/OES_texture_float
+    DetectTextureFloat() {
+        if (this.renderer.capabilities.isWebGL2) {
+            return true;
+        } else {
+            return this.renderer.extensions.get("OES_texture_float");
+        }
+    }
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/OES_texture_half_float
+    DetectTextureHalfFloat() {
+        if (this.renderer.capabilities.isWebGL2) {
+            return true;
+        } else {
+            return this.renderer.extensions.get("OES_texture_half_float");
+        }
+    }
+
     Render(clock) {
         //Update uniforms
         this.displayMaterialUniforms.time.value = 60.0 * clock.getElapsedTime();
@@ -108,11 +129,11 @@ export class ReactionDiffusionRenderer {
         // Render from the current RenderTarget into the other RenderTarget, then swap.
         // Repeat however many times per frame we desire.
         for (var i = 0; i < this.computeStepsPerFrame; i++) {
-
             var nextTargetIndex = this.currentTargetIndex === 0 ? 1 : 0;
 
             this.computeUniforms.sourceTexture.value = this.computeRenderTargets[this.currentTargetIndex].texture; //Put current target texture into material
-            this.renderer.render(this.scene, this.camera, this.computeRenderTargets[nextTargetIndex], true); //Render the scene to next target
+            this.renderer.setRenderTarget(this.computeRenderTargets[nextTargetIndex]);
+            this.renderer.render(this.scene, this.camera); //Render the scene to next target
             this.computeUniforms.sourceTexture.value = this.computeRenderTargets[nextTargetIndex].texture; //Put next target texture into material
             this.displayMaterialUniforms.displayTexture.value = this.computeRenderTargets[nextTargetIndex].texture; //Assign to display material
 
@@ -121,6 +142,7 @@ export class ReactionDiffusionRenderer {
 
         //Set the display mesh to use the display material and render the final frame
         this.displayMesh.material = this.displayMaterial;
+        this.renderer.setRenderTarget(null); // Set canvas as render target
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -181,7 +203,7 @@ export class ReactionDiffusionRenderer {
 
         this.computeUniforms.resolution.value = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
         //console.log(`Compute texture sized to (${this.computeUniforms.resolution.value.x}, ${this.computeUniforms.resolution.value.y})`);
-    
+
     }
 
     CreateMaterials() {
@@ -265,7 +287,7 @@ export class ReactionDiffusionRenderer {
         this.computeMaterial.blending = THREE.NoBlending;
 
         this.passThroughUniforms = {
-            texture: {
+            tex: {
                 value: null
             }
         };
@@ -281,21 +303,23 @@ export class ReactionDiffusionRenderer {
         //Read renderTarget into a DataTexture
         var buffer = new Float32Array(renderTarget.width * renderTarget.height * 4);
         this.renderer.readRenderTargetPixels(renderTarget, 0, 0, renderTarget.width, renderTarget.height, buffer);
-        var texture = new THREE.DataTexture(buffer, renderTarget.width, renderTarget.height, THREE.RGBAFormat, THREE.FloatType);
+        var texture = new THREE.DataTexture(buffer, renderTarget.width, renderTarget.height, THREE.RGBAFormat, THREE.FloatType); // TODO: Might need to redo this part for half-precision targets
         texture.needsUpdate = true;
 
         //Run the callback with the DataTexture
         callback(texture);
 
         //Render DataTexture into renderTarget
-        this.passThroughUniforms.texture.value = texture;
+        this.passThroughUniforms.tex.value = texture;
 
         //var oldMaterial = displayMesh.material;
         this.displayMesh.material = this.passThroughMaterial;
-        this.renderer.render(this.scene, this.camera, renderTarget);
+        this.renderer.setRenderTarget(renderTarget);
+        // this.renderer.clear();
+        this.renderer.render(this.scene, this.camera);
         //displayMesh.material = oldMaterial;
 
-        var gl = this.renderer.context;
+        var gl = this.renderer.getContext();
         var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
         if (status !== gl.FRAMEBUFFER_COMPLETE) {
             throw new Error("Couldn't render into framebuffer (browser likely has no undocumented or explicit support for WEBGL_color_buffer_float)");

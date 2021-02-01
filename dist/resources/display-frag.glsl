@@ -3,7 +3,7 @@
 //
 // This shader transforms the color output from compute-frag
 // into something nicer to look at.
-// 
+//
 
 #define PI 3.1415926535897932384626433832795
 

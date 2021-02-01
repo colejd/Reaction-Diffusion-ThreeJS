@@ -135,7 +135,7 @@ vec4 drawBrush(vec2 v_uv_pixel_coord, vec4 pixel, vec4 color) {
 
     float newB = mix(pixel.b, color.b, inBrush);
     final.b = mix(final.b, newB, when_ge(color.b, 0.0));
-    
+
 
     // Turn off the brush if interactPos is negative (outside the screen)
     final = mix(pixel, final, when_ge(interactPos.x, 0.0));
@@ -152,11 +152,11 @@ vec4 react(vec4 pixel, vec4 convolution) {
     float reactionRate = a * b * b;
 
     float du = da*convolution.r // Diffusion term
-                - reactionRate 
+                - reactionRate
                 + feed * (1.0 - a); // Replenishment term, f is scaled so A <= 1.0
 
     float dv = db * convolution.g // Diffusion term
-                + reactionRate 
+                + reactionRate
                 - ((feed + kill) - (c * biasStrength)) * b; // Diminishment term, scaled so b >= 0, must not be greater than replenishment
 
     vec2 dst = pixel.rg + timestep*vec2(du, dv);
@@ -166,9 +166,9 @@ vec4 react(vec4 pixel, vec4 convolution) {
 void main() {
 
     //vec2 texelSize = 1.0 / resolution.xy;
-    
+
     vec4 pixel = texture2D(sourceTexture, v_uv);
-    
+
     // Get the result of convolution on the pixel
     vec4 conv = laplace5Point(pixel);
     // Get the Reaction-Diffusion result using the convolution
@@ -178,8 +178,8 @@ void main() {
     final = drawBrush(v_uv * resolution.xy, final, vec4(-1, 0.9, -1, -1));
 
     // Saturate to prevent values from exceeding natural limits
-    final = saturate(final);
-    
+    final = clamp(final, 0.0, 1.0);
+
     // Output the final color
     gl_FragColor = final * doPass;
 }

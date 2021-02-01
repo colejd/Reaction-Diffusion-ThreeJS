@@ -12,15 +12,18 @@ let libraryName = package.name;
 
 let plugins = [], outputFile;
 
-if (env === 'build') {
-  //plugins.push(new UglifyJsPlugin({ minimize: true }));
-  outputFile = libraryName + '.min.js';
-} else {
-  outputFile = libraryName + '.js';
-}
+// if (env === 'build') {
+//   //plugins.push(new UglifyJsPlugin({ minimize: true }));
+//   outputFile = libraryName + '.min.js';
+// } else {
+//   outputFile = libraryName + '.js';
+// }
+
+outputFile = libraryName + '.js';
 
 const config = {
   entry: './src/main.js',
+  mode: env === 'build' ? 'production' : 'development',
   devtool: 'source-map',
   output: {
     path: path.resolve(__dirname, 'dist/'),
@@ -59,7 +62,8 @@ const config = {
   devServer: {
     compress: false,
     open: true,
-    openPage: 'example'
+    openPage: 'example',
+    hot: true,
   }
 };
 

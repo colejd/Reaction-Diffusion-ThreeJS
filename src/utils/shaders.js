@@ -8,9 +8,9 @@ export const baseVertexShader = `
 
 export const baseFragmentShader = `
     varying vec2 v_uv;
-    uniform sampler2D texture;
+    uniform sampler2D tex;
     void main() {
         vec2 uv = v_uv;
-        gl_FragColor = texture2D( texture, uv );
+        gl_FragColor = texture2D( tex, uv );
     }
 `;
