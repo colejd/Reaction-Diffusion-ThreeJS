@@ -6,11 +6,12 @@ class GUI {
 
         if(!guify) {
             console.log("Guify was not found! Include it on the page to show the GUI for this program.");
+            return
         }
-        
+
         this.panel = new guify({
-            title: 'Reaction-Diffusion Simulator', 
-            theme: 'dark', 
+            title: 'Reaction-Diffusion Simulator',
+            theme: 'dark',
             root: container,
             barMode: 'above',
             align: 'right',

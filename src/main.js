@@ -1,3 +1,4 @@
+// For polyfilling js
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
@@ -10,18 +11,23 @@ let Init = () => {
     if(!container) throw new Error("No #reaction-diffusion-container found!");
 
     if (!Detector.HasWebGL()) {
-        throw new Error("WebGL is not supported on this browser.");
         container.innerHTML = Detector.GetErrorHTML();
         container.classList.add("no-webgl");
+        container.classList.add("rd-init-failed");
+        throw new Error("WebGL is not supported on this browser.");
     }
     else {
         let rd = new ReactionDiffusion(container)
         rd.Init().then(() => {
-            gui.Init(rd, container);
+            // Add GUI on top if requested
+            if (container.getAttribute("no-gui") != "true") {
+                gui.Init(rd, container);
+            }
+            container.classList.add("rd-init-success");
         }).catch(error => {
             console.error(error);
-            container.innerHTML = Detector.GetErrorHTML(error);
             container.classList.add("no-webgl");
+            container.classList.add("rd-init-failed");
         });
     }
 
