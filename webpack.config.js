@@ -20,10 +20,10 @@ if (env === 'build') {
 }
 
 const config = {
-  entry: __dirname + '/src/main.js',
+  entry: './src/main.js',
   devtool: 'source-map',
   output: {
-    path: __dirname + '/dist',
+    path: path.resolve(__dirname, 'dist/'),
     filename: outputFile,
     library: libraryName,
     libraryTarget: 'umd',
@@ -32,22 +32,17 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.(png|glsl)$/,
-        use: [
-          {
-            loader: 'file-loader',
-            options: {
-              outputPath: 'resources/',
-              name: '[name].[ext]',
-              publicPath: env === 'build' ? 'dist/' : '/dist/'
-            }  
-          }
-        ]
+        test: /\.(png|glsl)$/i,
+        loader: 'file-loader',
+        options: {
+          outputPath: 'resources/',
+          name: '[name].[ext]',
+        }
       },
       { // Process js files
         test: /(\.jsx|\.js)$/,
         loader: 'babel-loader',
-        exclude: /(node_modules|bower_components)/
+        exclude: /(node_modules)/
       },
     //   { // Lint all js files with eslint-loader
     //     test: /(\.jsx|\.js)$/,
@@ -62,7 +57,7 @@ const config = {
   },
   plugins: plugins,
   devServer: {
-    compress: true,
+    compress: false,
     open: true,
     openPage: 'example'
   }

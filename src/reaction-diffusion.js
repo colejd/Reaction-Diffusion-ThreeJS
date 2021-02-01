@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ReactionDiffusionRenderer } from "./rd-renderer";
-import Stats from "./vendor/stats.min.js";
+import Stats from "./vendor/stats.js";
 
 export class ReactionDiffusion {
     constructor(container) {

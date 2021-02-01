@@ -1,4 +1,6 @@
-require("babel-polyfill");
+import "core-js/stable";
+import "regenerator-runtime/runtime";
+
 import { Detector } from "./utils/webgl-detect";
 import { gui } from "./gui";
 import { ReactionDiffusion } from "./reaction-diffusion.js";

@@ -4,28 +4,32 @@
   "description": "GPGPU simulation of various Reaction-Diffusion systems",
   "main": "src/main.js",
   "scripts": {
-    "build": "webpack --env build",
-    "dev": "webpack --progress --colors --env dev",
-    "dev:watch": "npm run-script dev -- --watch & webpack-dev-server",
+    "build": "webpack --env build --mode=production",
+    "dev": "webpack --env dev --mode=development --progress --color",
+    "dev:watch": "npm run-script dev && webpack serve",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jonathan Cole",
   "license": "MIT",
   "devDependencies": {
-    "babel-cli": "6.24.1",
-    "babel-core": "6.24.1",
-    "babel-eslint": "7.2.3",
-    "babel-loader": "7.0.0",
-    "babel-plugin-add-module-exports": "0.2.1",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-es2015": "6.24.1",
-    "file-loader": "^0.11.2",
-    "webpack": "3.1.0",
-    "webpack-dev-server": "^2.7.1",
-    "yargs": "^8.0.2"
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.12.10",
+    "@babel/preset-env": "^7.0.0",
+    "babel-eslint": "^9.0.0",
+    "babel-loader": "8.2.2",
+    "babel-plugin-add-module-exports": "1.0.4",
+    "core-js": "^3.8.3",
+    "file-loader": "^6.2.0",
+    "webpack": "5.19.0",
+    "webpack-cli": "^4.4.0",
+    "webpack-dev-server": "^3.11.2",
+    "yargs": "^16.2.0"
   },
   "dependencies": {
-    "three": "^0.87.1"
+    "@babel/runtime": "^7.12.5",
+    "@babel/runtime-corejs3": "^7.12.5",
+    "three": "^0.125.2"
   },
   "directories": {
     "doc": "docs",
