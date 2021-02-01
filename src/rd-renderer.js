@@ -22,7 +22,7 @@ export class ReactionDiffusionRenderer {
 
     }
 
-    async Init(width, height) {
+    async Init(width, height, optionalParams) {
         // Load shaders
         await FileLoader.LoadFiles(computeFragURL, computeVertURL, displayFragURL)
             .then((responses) => {
@@ -78,6 +78,29 @@ export class ReactionDiffusionRenderer {
         this.scene.add(this.displayMesh);
 
         this.SetPreset("Coral");
+
+        // Apply params specified by html attributes on container if present
+        if (optionalParams.stepsPerIteration) {
+            this.computeStepsPerFrame = optionalParams.stepsPerIteration;
+            console.log(`Using iterations-per-frame value from HTML attributes = ${optionalParams.stepsPerIteration}`)
+        }
+        if (optionalParams.feed) {
+            this.computeUniforms.feed.value = optionalParams.feed;
+            console.log(`Using f value from HTML attributes = ${optionalParams.feed}`)
+        }
+        if (optionalParams.kill) {
+            this.computeUniforms.kill.value = optionalParams.kill;
+            console.log(`Using k value from HTML attributes = ${optionalParams.kill}`)
+        }
+        if (optionalParams.timeScale) {
+            this.computeUniforms.timestep.value = optionalParams.timeScale;
+            console.log(`Using time-scale value from HTML attributes = ${optionalParams.timeScale}`)
+        }
+        if (optionalParams.resolutionScale) {
+            this.internalResolutionMultiplier = optionalParams.resolutionScale;
+            console.log(`Using resolution-scale value from HTML attributes = ${optionalParams.resolutionScale}`)
+        }
+
         this.ReformRenderTargets(width, height);
         this.Reset();
 

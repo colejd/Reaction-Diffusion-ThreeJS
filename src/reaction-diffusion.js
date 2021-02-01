@@ -10,7 +10,7 @@ export class ReactionDiffusion {
     async Init() {
 
         this.rdView = new ReactionDiffusionRenderer();
-        await this.rdView.Init(this.container.clientWidth, this.container.clientHeight);
+        await this.rdView.Init(this.container.clientWidth, this.container.clientHeight, this.GetOptionalParamsFromContainerAttributes(this.container));
         this.container.appendChild(this.rdView.renderer.domElement);
 
         // Set up event listeners
@@ -58,6 +58,29 @@ export class ReactionDiffusion {
 
     ToggleDebug() {
         this.stats.dom.style.display = this.stats.dom.style.display == "none" ? "block" : "none";
+    }
+
+    // Gives a dictionary holding the optional attributes a user might add
+    // to the container in HTML-land.
+    GetOptionalParamsFromContainerAttributes(container) {
+        let params = new Object();
+
+        let stepsPerFrame = container.getAttribute("steps-per-iteration");
+        if (stepsPerFrame) params["stepsPerIteration"] = parseInt(stepsPerFrame);
+
+        let feed = container.getAttribute("feed");
+        if (feed) params["feed"] = parseFloat(feed);
+
+        let kill = container.getAttribute("kill");
+        if (kill) params["kill"] = parseFloat(kill);
+
+        let resolutionScale = container.getAttribute("resolution-scale");
+        if (resolutionScale) params["resolutionScale"] = parseFloat(resolutionScale);
+
+        let timeScale = container.getAttribute("time-scale");
+        if (timeScale) params["timeScale"] = parseFloat(timeScale);
+
+        return params;
     }
 
     // INPUT HANDLING ---------------------------------------------------- //

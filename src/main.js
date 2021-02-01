@@ -17,7 +17,8 @@ let Init = () => {
         throw new Error("WebGL is not supported on this browser.");
     }
     else {
-        let rd = new ReactionDiffusion(container)
+        let rd = new ReactionDiffusion(container);
+
         rd.Init().then(() => {
             // Add GUI on top if requested
             if (container.getAttribute("no-gui") != "true") {
