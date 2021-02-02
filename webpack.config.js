@@ -60,10 +60,10 @@ const config = {
   devServer: {
     compress: false,
     open: true,
-    openPage: 'basic_example.html',
+    openPage: 'basic_example.html', // Relative to contentBase
+    contentBase: path.join(__dirname, 'example'),
     watchContentBase: true,
-    contentBase: './example/',
-    publicPath: '/js'
+    publicPath: '/js', // Contents of /dist will be in a virtual path called `/js` for example html pages
   }
 };
 
