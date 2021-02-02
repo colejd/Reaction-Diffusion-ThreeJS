@@ -80,23 +80,23 @@ export class ReactionDiffusionRenderer {
         this.SetPreset("Coral");
 
         // Apply params specified by html attributes on container if present
-        if (optionalParams.stepsPerIteration) {
+        if (optionalParams.stepsPerIteration != null) {
             this.computeStepsPerFrame = optionalParams.stepsPerIteration;
             console.log(`Using iterations-per-frame value from HTML attributes = ${optionalParams.stepsPerIteration}`)
         }
-        if (optionalParams.feed) {
+        if (optionalParams.feed != null) {
             this.computeUniforms.feed.value = optionalParams.feed;
             console.log(`Using f value from HTML attributes = ${optionalParams.feed}`)
         }
-        if (optionalParams.kill) {
+        if (optionalParams.kill != null) {
             this.computeUniforms.kill.value = optionalParams.kill;
             console.log(`Using k value from HTML attributes = ${optionalParams.kill}`)
         }
-        if (optionalParams.timeScale) {
+        if (optionalParams.timeScale != null) {
             this.computeUniforms.timestep.value = optionalParams.timeScale;
             console.log(`Using time-scale value from HTML attributes = ${optionalParams.timeScale}`)
         }
-        if (optionalParams.resolutionScale) {
+        if (optionalParams.resolutionScale != null) {
             this.internalResolutionMultiplier = optionalParams.resolutionScale;
             console.log(`Using resolution-scale value from HTML attributes = ${optionalParams.resolutionScale}`)
         }
