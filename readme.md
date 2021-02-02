@@ -1,6 +1,8 @@
 # Reaction-Diffusion Simulation in Three.js
 
-![Image of the reaction-diffusion simulation](/misc/images/reaction-diffusion.png)
+<p align="center">
+   <img src="/misc/images/reaction-diffusion.png" alt="Image of Reaction-Diffusion Simulator" width="75%">
+</p>
 
 This project is a reaction-diffusion simulation based on the [Gray-Scott model](https://groups.csail.mit.edu/mac/projects/amorphous/GrayScott/). Reaction-Diffusion is an interesting model for pattern formation, and variations of it have been proposed for such phenomena as pigment formations in striped animals, the Belousov-Zhabotinsky reaction, and the patterns on brain corals.
 
