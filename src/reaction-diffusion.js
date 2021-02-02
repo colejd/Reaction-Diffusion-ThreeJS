@@ -80,6 +80,12 @@ export class ReactionDiffusion {
         let timeScale = container.getAttribute("time-scale");
         if (timeScale) params["timeScale"] = parseFloat(timeScale);
 
+        let seedFrequency = container.getAttribute("seed-frequency");
+        if (seedFrequency) params["seedFrequency"] = parseFloat(seedFrequency);
+
+        let allowInteraction = container.getAttribute("allow-interaction");
+        if (allowInteraction) params["allowInteraction"] = allowInteraction == "true";
+
         return params;
     }
 

@@ -8,6 +8,8 @@ import computeVertURL from './resources/shaders/compute-vert.glsl';
 import displayFragURL from './resources/shaders/display-frag.glsl';
 import presets from './presets.json';
 
+var SimplexNoise = require('simplex-noise');
+
 import { baseVertexShader, baseFragmentShader } from './utils/shaders.js';
 
 export class ReactionDiffusionRenderer {
@@ -86,19 +88,27 @@ export class ReactionDiffusionRenderer {
         }
         if (optionalParams.feed != null) {
             this.computeUniforms.feed.value = optionalParams.feed;
-            console.log(`Using f value from HTML attributes = ${optionalParams.feed}`)
+            console.log(`Using f value from HTML attributes = ${optionalParams.feed}`);
         }
         if (optionalParams.kill != null) {
             this.computeUniforms.kill.value = optionalParams.kill;
-            console.log(`Using k value from HTML attributes = ${optionalParams.kill}`)
+            console.log(`Using k value from HTML attributes = ${optionalParams.kill}`);
         }
         if (optionalParams.timeScale != null) {
             this.computeUniforms.timestep.value = optionalParams.timeScale;
-            console.log(`Using time-scale value from HTML attributes = ${optionalParams.timeScale}`)
+            console.log(`Using time-scale value from HTML attributes = ${optionalParams.timeScale}`);
         }
         if (optionalParams.resolutionScale != null) {
             this.internalResolutionMultiplier = optionalParams.resolutionScale;
-            console.log(`Using resolution-scale value from HTML attributes = ${optionalParams.resolutionScale}`)
+            console.log(`Using resolution-scale value from HTML attributes = ${optionalParams.resolutionScale}`);
+        }
+        if (optionalParams.seedFrequency != null) {
+            this.seedFrequency = optionalParams.seedFrequency;
+            console.log(`Using seed-frequency value from HTML attributes = ${optionalParams.seedFrequency}`);
+        }
+        if (optionalParams.allowInteraction != null) {
+            this.allowInteraction = optionalParams.allowInteraction;
+            console.log(`Using allow-interaction value from HTML attributes = ${optionalParams.allowInteraction}`);
         }
 
         this.ReformRenderTargets(width, height);
@@ -192,7 +202,12 @@ export class ReactionDiffusionRenderer {
             //Add some bias in the center
             //this.SeedFilledCircle(texture, sizeX * 0.5, sizeY * 0.5, Math.min(sizeX, sizeY) * 0.25, 2);
 
-            this.SeedFilledCircle(texture, sizeX * 0.5, sizeY * 0.5, 5.0);
+            if (this.seedFrequency != null) {
+                this.SeedNoise(texture);
+            }
+            else {
+                this.SeedFilledCircle(texture, sizeX * 0.5, sizeY * 0.5, 5.0);
+            }
         }
         this.ApplyFunctionToRenderTarget(this.computeRenderTargets[0], Seed);
         this.ApplyFunctionToRenderTarget(this.computeRenderTargets[1], Seed);
@@ -444,8 +459,34 @@ export class ReactionDiffusionRenderer {
         //seedCircle(texture, x, y, radius, radius, channel);
     }
 
+    SeedNoise(texture, frequency = 4.0) {
+        var simplex = new SimplexNoise(Math.random);
+
+        const width = texture.image.width;
+        const height = texture.image.height;
+        var pixels = texture.image.data;
+        var px = 0;
+        for (var i = 0; i < width; i++) {
+            for (var j = 0; j < height; j++) {
+
+                let nx = i / width - 0.5;
+                let ny = j / height - 0.5;
+
+                let r = simplex.noise2D(frequency * nx, frequency * ny) + 1 / 2; // Normalize from [-1, 1] to [0, 1]
+                r = Math.pow(r, 20); // Makes peaks more dramatic. See https://www.redblobgames.com/maps/terrain-from-noise/
+                r = Math.min(r, 1); // Cap value at 1.0
+
+                pixels[px + 1] = r;
+
+                px += 4;
+            }
+        }
+    }
+
     SetInteractPos(x, y) {
         // console.log(`(${x}, ${y})`);
-        this.computeUniforms.interactPos.value = new THREE.Vector2(x * this.internalResolutionMultiplier, y * this.internalResolutionMultiplier);
+        if (this.allowInteraction == null || this.allowInteraction == true) { // As long as false isn't explicitly specified
+            this.computeUniforms.interactPos.value = new THREE.Vector2(x * this.internalResolutionMultiplier, y * this.internalResolutionMultiplier);
+        }
     }
 }
