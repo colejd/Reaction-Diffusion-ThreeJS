@@ -1,8 +1,12 @@
 # Reaction-Diffusion Simulation in Three.js
 
-This project is a [three.js](threejs.org)-based GPGPU simulation of chemicals reacting and diffusing on a 2D plane based on the [Gray-Scott model](https://groups.csail.mit.edu/mac/projects/amorphous/GrayScott/).
+![Image of the reaction-diffusion simulation](/misc/images/reaction-diffusion.png)
 
-Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects/reaction-diffusion).
+This project is a reaction-diffusion simulation based on the [Gray-Scott model](https://groups.csail.mit.edu/mac/projects/amorphous/GrayScott/). Reaction-Diffusion is an interesting model for pattern formation, and variations of it have been proposed for such phenomena as pigment formations in striped animals, the Belousov-Zhabotinsky reaction, and the patterns on brain corals.
+
+The simulation is driven by [three.js](threejs.org). It's GPU-accelerated, it works on mobile, it's easy to embed on your website, and it's easy to customize for your own needs.
+
+You can try it out at [jons.website/projects/reaction-diffusion](https://jons.website/projects/reaction-diffusion). For a more robust
 
 ## Usage
 
@@ -13,28 +17,29 @@ Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects
     * If there's an error loading, the container div will get the class `rd-init-failed` added. If it succeeds, the class `rd-init-success` will be added. You can use that for styling.
 
 ### Optional attributes
-    * If you don't want the GUI, you can add a "no-gui" attribute to the container, e.g. `<div class="reaction-diffusion-container" no-gui="true"></div>`
-    * You can set values for `feed` and `kill` like so: `<div class="reaction-diffusion-container" feed="0.01" kill="0.05"></div>`
-    * This program can be very intensive at high resolutions, so an optional resolution multiplier is included. You can set to any value between 0 and 1, where 1 is native resolution and 0 is no resolution (don't do that).
-        - For example, for half resolution, you can do `<div class="reaction-diffusion-container" resolution-scale="0.5"></div>`
-        - This value is 0.5 by default.
-    * You can also control the number of steps taken per frame. This makes the simulation go faster at the expense of performance. Set it to a lower value to improve performance.
-        - `<div class="reaction-diffusion-container" steps-per-iteration="8"></div>`
-        - This is an integer value greater than 0. Default is 16.
-    * You can also set a multiplier for the time scale if you want to slow things down.
-        - `<div class="reaction-diffusion-container" time-scale="1.0"></div>`
-        - This is a float value between 0 and 1. Default is 1.0.
-    * Disallow user interaction with `allow-interaction="false"`.
-        - `<div class="reaction-diffusion-container" allow-interaction="false"></div>`
-        - Valid values are "true" or "false". If you don't specify, it'll default to "true".
-    * You can make the simulation seed with noise at a given frequency with "seed-frequency".
-        - `<div class="reaction-diffusion-container" seed-frequency="4.0"></div>`
-        - This is a float value greater than 0. Higher numbers mean the peaks are closer together.
-        - If you don't set this value, a circular non-random seed is used instead.
-        - A good way to debug this is to set the time scale to 0. That way, the simulation will stay with whatever the initial seed is.
-    * For speed, you can force half-precision float precision by setting `force-half-precision="true"`.
-        - `<div class="reaction-diffusion-container" force-half-precision="true"></div>`
-        - Valid values are "true" or "false". If you don't specify, it'll default to "false".
+
+* If you don't want the GUI, you can add a "no-gui" attribute to the container, e.g. `<div class="reaction-diffusion-container" no-gui="true"></div>`
+* You can set values for `feed` and `kill` like so: `<div class="reaction-diffusion-container" feed="0.01" kill="0.05"></div>`
+* This program can be very intensive at high resolutions, so an optional resolution multiplier is included. You can set to any value between 0 and 1, where 1 is native resolution and 0 is no resolution (don't do that).
+    - For example, for half resolution, you can do `<div class="reaction-diffusion-container" resolution-scale="0.5"></div>`
+    - This value is 0.5 by default.
+* You can also control the number of steps taken per frame. This makes the simulation go faster at the expense of performance. Set it to a lower value to improve performance.
+    - `<div class="reaction-diffusion-container" steps-per-iteration="8"></div>`
+    - This is an integer value greater than 0. Default is 16.
+* You can also set a multiplier for the time scale if you want to slow things down.
+    - `<div class="reaction-diffusion-container" time-scale="1.0"></div>`
+    - This is a float value between 0 and 1. Default is 1.0.
+* Disallow user interaction with `allow-interaction="false"`.
+    - `<div class="reaction-diffusion-container" allow-interaction="false"></div>`
+    - Valid values are "true" or "false". If you don't specify, it'll default to "true".
+* You can make the simulation seed with noise at a given frequency with "seed-frequency".
+    - `<div class="reaction-diffusion-container" seed-frequency="4.0"></div>`
+    - This is a float value greater than 0. Higher numbers mean the peaks are closer together.
+    - If you don't set this value, a circular non-random seed is used instead.
+    - A good way to debug this is to set the time scale to 0. That way, the simulation will stay with whatever the initial seed is.
+* You can force half-precision floats by setting `force-half-precision="true"`. This will give a consistent experience on all platforms, though it will make some presets behave unpredictably.
+    - `<div class="reaction-diffusion-container" force-half-precision="true"></div>`
+    - Valid values are "true" or "false". If you don't specify, it'll default to "false".
 
 ## Building
 
@@ -46,7 +51,7 @@ Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects
 
 ## License
 
-This project is given under the MIT License - see [LICENSE.md](LICENSE.md) for details.
+This repo is provided under the MIT License - see [LICENSE.md](LICENSE.md) for details.
 
 ## Acknowledgments
 
