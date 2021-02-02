@@ -60,8 +60,10 @@ const config = {
   devServer: {
     compress: false,
     open: true,
-    openPage: 'example/basic_example.html',
-    hot: true,
+    openPage: 'basic_example.html',
+    watchContentBase: true,
+    contentBase: './example/',
+    publicPath: '/js'
   }
 };
 

@@ -31,7 +31,7 @@ Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects
 * In the root, run `npm install`
 * `npm run build_dev` will build `reaction-diffusion.js` and the required resources into the `dist` folder. Put these all into your page and follow the usage instructions.
 * `npm run build_prod` will build a minified version of the library as `reaction-diffusion.min.js` into the `dist` folder.
-* You can run `npm run dev:watch` to serve the simulation on a bundled example page. Right now you'll need to stop and re-run this every time you make a change.
+* You can run `npm run dev:watch` to serve the simulation on a bundled example page. When you make changes to the HTML or JS, the page will reload.
 
 ## License
 
