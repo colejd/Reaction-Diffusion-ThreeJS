@@ -1,14 +1,21 @@
 # Reaction-Diffusion Simulation in Three.js
 
 <p align="center">
-   <img src="/misc/images/reaction-diffusion.png" alt="Image of Reaction-Diffusion Simulator" width="75%">
+   <a href="https://jons.website/projects/reaction-diffusion">
+      <img src="/misc/images/reaction-diffusion.png" alt="Image of Reaction-Diffusion Simulator" width="75%">
+   </a>
+   </br>
+   </br>
+   <a href="https://jons.website/projects/reaction-diffusion">Try it out here!</a>
+   </br>
+   </br>
 </p>
 
-This project is a reaction-diffusion simulation based on the [Gray-Scott model](https://groups.csail.mit.edu/mac/projects/amorphous/GrayScott/). Reaction-Diffusion is an interesting model for pattern formation, and variations of it have been proposed for such phenomena as pigment formations in striped animals, the Belousov-Zhabotinsky reaction, and the patterns on brain corals.
+This project is a reaction-diffusion simulator based on the [Gray-Scott model](https://groups.csail.mit.edu/mac/projects/amorphous/GrayScott/). Reaction-Diffusion is an interesting model for pattern formation, and variations of it have been proposed for such phenomena as [pigment formations in animals and plants](https://www.biorxiv.org/content/10.1101/403600v1), the [Belousov-Zhabotinsky reaction](https://en.wikipedia.org/wiki/Belousov%E2%80%93Zhabotinsky_reaction), and [the formation of patterns on various corals](https://www.tandfonline.com/doi/full/10.1080/23311835.2018.1426524).
 
-The simulation is driven by [three.js](threejs.org). It's GPU-accelerated, it works on mobile, it's easy to embed on your website, and it's easy to customize for your own needs.
+The simulator is driven by [three.js](threejs.org). It's GPU-accelerated, it works on mobile, it's easy to embed on your website, and it's easy to customize for your own needs.
 
-You can try it out at [jons.website/projects/reaction-diffusion](https://jons.website/projects/reaction-diffusion). For a more robust
+If you want to try out a much more robust version of this, [I have an app on the App Store you might be interested in](https://jons.website/apps/liquid-math/).
 
 ## Usage
 
