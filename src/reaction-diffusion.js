@@ -86,6 +86,9 @@ export class ReactionDiffusion {
         let allowInteraction = container.getAttribute("allow-interaction");
         if (allowInteraction) params["allowInteraction"] = allowInteraction == "true";
 
+        let forceHalfPrecision = container.getAttribute("force-half-precision");
+        if (forceHalfPrecision) params["forceHalfPrecision"] = forceHalfPrecision == "true";
+
         return params;
     }
 

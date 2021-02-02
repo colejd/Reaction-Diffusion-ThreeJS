@@ -43,7 +43,7 @@ export class ReactionDiffusionRenderer {
         this.CheckWebGLSupport();
 
         // Configure renderer based on available texture float precision
-        if (this.DetectTextureFloat()) {
+        if (this.DetectTextureFloat() && !this.forceHalfPrecision) {
             console.log("Using full-precision float textures");
             this.imageType = THREE.FloatType;
 
@@ -109,6 +109,10 @@ export class ReactionDiffusionRenderer {
         if (optionalParams.allowInteraction != null) {
             this.allowInteraction = optionalParams.allowInteraction;
             console.log(`Using allow-interaction value from HTML attributes = ${optionalParams.allowInteraction}`);
+        }
+        if (optionalParams.forceHalfPrecision != null) {
+            this.forceHalfPrecision = optionalParams.forceHalfPrecision
+            console.log(`Using force-half-precision value from HTML attributes = ${optionalParams.forceHalfPrecision}`);
         }
 
         this.ReformRenderTargets(width, height);

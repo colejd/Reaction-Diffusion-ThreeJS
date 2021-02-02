@@ -32,6 +32,9 @@ Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects
         - This is a float value greater than 0. Higher numbers mean the peaks are closer together.
         - If you don't set this value, a circular non-random seed is used instead.
         - A good way to debug this is to set the time scale to 0. That way, the simulation will stay with whatever the initial seed is.
+    * For speed, you can force half-precision float precision by setting `force-half-precision="true"`.
+        - `<div class="reaction-diffusion-container" force-half-precision="true"></div>`
+        - Valid values are "true" or "false". If you don't specify, it'll default to "false".
 
 ## Building
 
