@@ -24,6 +24,14 @@ Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects
     * You can also set a multiplier for the time scale if you want to slow things down.
         - `<div class="reaction-diffusion-container" time-scale="1.0"></div>`
         - This is a float value between 0 and 1. Default is 1.0.
+    * Disallow user interaction with `allow-interaction="false"`.
+        - `<div class="reaction-diffusion-container" allow-interaction="false"></div>`
+        - Valid values are "true" or "false". If you don't specify, it'll default to "true".
+    * You can make the simulation seed with noise at a given frequency with "seed-frequency".
+        - `<div class="reaction-diffusion-container" seed-frequency="4.0"></div>`
+        - This is a float value greater than 0. Higher numbers mean the peaks are closer together.
+        - If you don't set this value, a circular non-random seed is used instead.
+        - A good way to debug this is to set the time scale to 0. That way, the simulation will stay with whatever the initial seed is.
 
 ## Building
 
