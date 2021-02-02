@@ -8,7 +8,7 @@ Demo at [jons.website/projects/reaction-diffusion](https://jons.website/projects
 
 1. Grab the [latest release](https://github.com/colejd/Reaction-Diffusion-ThreeJS/releases) and unzip it wherever you want. Make sure the file structure is intact!
 2. Import the JS in your HTML: `<script src="some-folder/reaction-diffusion.js"></script>`
-3. Create a div on the same page with the class `reaction-diffusion-container`. We'll call this the *container* from here on. A canvas that shows the simulation will be injected as a child of the container.
+3. Create a div on the same page with the id `reaction-diffusion-container`. We'll call this the *container* from here on. A canvas that shows the simulation will be injected as a child of the container.
     * The simulation canvas will automatically resize to fill the container, so make sure the container gets sized somehow.
     * If there's an error loading, the container div will get the class `rd-init-failed` added. If it succeeds, the class `rd-init-success` will be added. You can use that for styling.
 
