@@ -51,7 +51,7 @@ You can try it out at [jons.website/projects/reaction-diffusion](https://jons.we
 
 ## License
 
-This repo is provided under the MIT License - see [LICENSE.md](LICENSE.md) for details.
+This repo is provided under the [MIT License](LICENSE.md). If you use my code, please tell me! I'd love to see what you're working on.
 
 ## Acknowledgments
 
