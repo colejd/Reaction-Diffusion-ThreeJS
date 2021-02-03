@@ -9,10 +9,11 @@
 //
 
 varying vec2 v_uv;
-varying vec2 texelSize;
+
+uniform vec2 resolution;
+uniform vec2 texelSize;
 
 uniform sampler2D sourceTexture;
-uniform vec2 resolution;
 uniform float time;
 
 uniform float feed; // Growth rate for B
@@ -56,7 +57,6 @@ float when_ge(float x, float y) {
 vec4 convolve5(vec4 centerPixel, vec3[3] kernel) {
     vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
 
-    // Orthogonal texels
     result += texture2D( sourceTexture, v_uv + vec2( 0.0, texelSize.y ) ) * kernel[0][1];
     result += texture2D( sourceTexture, v_uv + vec2( 0.0, -texelSize.y ) ) * kernel[2][1];
     result += texture2D( sourceTexture, v_uv + vec2( texelSize.x, 0.0 ) ) * kernel[1][0];

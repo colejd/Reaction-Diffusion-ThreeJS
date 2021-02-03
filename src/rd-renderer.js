@@ -125,9 +125,6 @@ export class ReactionDiffusionRenderer {
         if (this.renderer.capabilities.maxVertexTextures === 0) {
             throw new Error("System does not support vertex shader textures!");
         }
-        if (this.renderer.capabilities.maxVaryings < 5) {
-            throw new Error("System does not support the number of varying vectors (>= 5) needed to function!");
-        }
 
         // Detect color_buffer_float support
         // if (this.renderer.capabilities.isWebGL2 && !this.renderer.extensions.get("EXT_color_buffer_float")) {
@@ -240,12 +237,17 @@ export class ReactionDiffusionRenderer {
             this.computeRenderTargets.push(newTarget);
         }
 
-        this.displayMaterialUniforms.resolution.value = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
+        // Determine actual resolution
+        let realResolution = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
+        // Determine texel size (size of a pixel when resolution is normalized between 0 and 1)
+        let texelSize = new THREE.Vector2(1.0 / realResolution.width, 1.0 / realResolution.height);
+
+        this.displayMaterialUniforms.resolution.value = realResolution;
         console.log(`Display texture sized to (${this.displayMaterialUniforms.resolution.value.x}, ${this.displayMaterialUniforms.resolution.value.y})`);
 
-        this.computeUniforms.resolution.value = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
+        this.computeUniforms.resolution.value = realResolution;
+        this.computeUniforms.texelSize.value = texelSize;
         //console.log(`Compute texture sized to (${this.computeUniforms.resolution.value.x}, ${this.computeUniforms.resolution.value.y})`);
-
     }
 
     CreateMaterials() {
@@ -276,6 +278,10 @@ export class ReactionDiffusionRenderer {
                 value: undefined
             },
             resolution: {
+                type: "v2",
+                value: new THREE.Vector2()
+            },
+            texelSize: {
                 type: "v2",
                 value: new THREE.Vector2()
             },
@@ -473,12 +479,13 @@ export class ReactionDiffusionRenderer {
         for (var i = 0; i < width; i++) {
             for (var j = 0; j < height; j++) {
 
-                let nx = i / width - 0.5;
-                let ny = j / height - 0.5;
+                let nx = i / width;
+                let ny = j / height;
 
                 let r = simplex.noise2D(frequency * nx, frequency * ny) + 1 / 2; // Normalize from [-1, 1] to [0, 1]
                 r = Math.pow(r, 20); // Makes peaks more dramatic. See https://www.redblobgames.com/maps/terrain-from-noise/
-                r = Math.min(r, 1); // Cap value at 1.0
+                if (r > 1.0) r = 1; // Cap value at 1.0
+                if (r < 0.5) r = 0; // High pass at 0.5
 
                 pixels[px + 1] = r;
 
