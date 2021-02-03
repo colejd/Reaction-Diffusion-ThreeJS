@@ -22,7 +22,7 @@ if (env === 'build') {
 const config = {
   entry: './src/main.js',
   mode: env === 'build' ? 'production' : 'development',
-  devtool: 'source-map',
+  devtool: env === 'build' ? false : 'eval-source-map',
   output: {
     path: path.resolve(__dirname, 'dist/'),
     filename: outputFile,
