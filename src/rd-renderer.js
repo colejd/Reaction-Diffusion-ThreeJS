@@ -76,7 +76,7 @@ export class ReactionDiffusionRenderer {
         this.camera.position.z = 50; //Scoot backward 50 units
 
         //Make plane primitive
-        let displayGeometry = new THREE.PlaneGeometry(1.0, 1.0);
+        let displayGeometry = new THREE.PlaneBufferGeometry(1.0, 1.0);
         this.displayMesh = new THREE.Mesh(displayGeometry, this.displayMaterial);
         this.scene.add(this.displayMesh);
 
