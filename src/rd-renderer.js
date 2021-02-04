@@ -41,27 +41,53 @@ export class ReactionDiffusionRenderer {
         });
 
         // Check for WebGL support needed for the program to run
-        this.CheckWebGLSupport();
+        if (this.renderer.capabilities.maxVertexTextures === 0) {
+            throw new Error("System does not support vertex shader textures!");
+        }
 
         // Configure renderer based on available texture float precision
-        if (this.DetectTextureFloat() && !this.forceHalfPrecision) {
-            console.log("Using full-precision float textures");
+        let fallbackToHalfPrecision = this.forceHalfPrecision;
+        // https://developer.mozilla.org/en-US/docs/Web/API/OES_texture_float
+        let supportsTextureFloat = this.renderer.capabilities.isWebGL2 ? true : this.renderer.extensions.get("OES_texture_float");
+        // https://developer.mozilla.org/en-US/docs/Web/API/OES_texture_half_float
+        let supportsTextureHalfFloat = this.renderer.capabilities.isWebGL2 ? true : this.renderer.extensions.get("OES_texture_half_float");
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#support_for_float_textures_doesnt_mean_you_can_render_into_them!
+        let supportsFullPrecisionRenderToTexture = this.renderer.capabilities.isWebGL2 ? this.renderer.extensions.get("EXT_color_buffer_float") : this.renderer.extensions.get("WEBGL_color_buffer_float");
+        let supportsHalfPrecisionRenderToTexture = this.renderer.capabilities.isWebGL2 ? this.renderer.extensions.get("EXT_color_buffer_float") : this.renderer.extensions.get("EXT_color_buffer_half_float");
+
+        // Try to use full precision if available and not manually forced to half precision
+        if (supportsTextureFloat && !fallbackToHalfPrecision) {
+            console.log("Trying to use full-precision float textures...");
             this.imageType = THREE.FloatType;
 
-            if (!this.renderer.extensions.get("OES_texture_float_linear")) {
-                console.log("OES_texture_float_linear not supported. Falling back on nearest-neighbor filtering.");
-                this.filterType = THREE.NearestFilter;
-            }
-        } else if (this.DetectTextureHalfFloat()) {
-            console.log("Using half-precision float textures");
-            this.imageType = THREE.HalfFloatType;
-
-            if (!this.renderer.extensions.get("OES_texture_half_float_linear")) {
-                console.log("OES_texture_half_float_linear not supported. Falling back on nearest-neighbor filtering.");
-                this.filterType = THREE.NearestFilter;
+            // Detect support for rendering into float textures
+            if (supportsFullPrecisionRenderToTexture) {
+                if (!this.renderer.extensions.get("OES_texture_float_linear")) {
+                    console.log("OES_texture_float_linear not supported. Falling back on nearest-neighbor filtering.");
+                    this.filterType = THREE.NearestFilter;
+                }
+                console.log("Successfully using full-precision float textures.");
+            } else {
+                console.log("WebGL 2 highp context does not support render-to-texture! Falling back to halfp...");
+                fallbackToHalfPrecision = true;
             }
         } else {
-            throw new Error("WebGL context does not support float textures!");
+            fallbackToHalfPrecision = true;
+        }
+
+        if (fallbackToHalfPrecision) {
+            console.log("Trying to use half-precision float textures...");
+            this.imageType = THREE.HalfFloatType;
+
+            if (supportsHalfPrecisionRenderToTexture) {
+                if (!this.renderer.extensions.get("OES_texture_half_float_linear")) {
+                    console.log("OES_texture_half_float_linear not supported. Falling back on nearest-neighbor filtering.");
+                    this.filterType = THREE.NearestFilter;
+                }
+                console.log("Successfully using half-precision float textures.");
+            } else {
+                throw new Error("WebGL context does not support float textures!");
+            }
         }
 
         this.renderer.setSize(width, height);
@@ -83,6 +109,17 @@ export class ReactionDiffusionRenderer {
         this.SetPreset("Coral");
 
         // Apply params specified by html attributes on container if present
+        this.IngestOptionalHTMLAttributes(optionalParams);
+
+        this.ReformRenderTargets(width, height);
+        this.Reset();
+
+    }
+
+    /**
+     * Apply params specified by html attributes on the container if present
+     */
+    IngestOptionalHTMLAttributes(optionalParams) {
         if (optionalParams.stepsPerIteration != null) {
             this.computeStepsPerFrame = optionalParams.stepsPerIteration;
             console.log(`Using iterations-per-frame value from HTML attributes = ${optionalParams.stepsPerIteration}`)
@@ -114,42 +151,6 @@ export class ReactionDiffusionRenderer {
         if (optionalParams.forceHalfPrecision != null) {
             this.forceHalfPrecision = optionalParams.forceHalfPrecision
             console.log(`Using force-half-precision value from HTML attributes = ${optionalParams.forceHalfPrecision}`);
-        }
-
-        this.ReformRenderTargets(width, height);
-        this.Reset();
-
-    }
-
-    CheckWebGLSupport() {
-        // Check for the GL extensions we need to run
-        if (this.renderer.capabilities.maxVertexTextures === 0) {
-            throw new Error("System does not support vertex shader textures!");
-        }
-
-        // Detect color_buffer_float support
-        // if (this.renderer.capabilities.isWebGL2 && !this.renderer.extensions.get("EXT_color_buffer_float")) {
-        //     throw new Error("WebGL 2 context does not support EXT_color_buffer_float!");
-        // } else if (!this.renderer.extensions.get("WEBGL_color_buffer_float")) {
-        //     throw new Error("WebGL 1 context does not support WEBGL_color_buffer_float!");
-        // }
-    }
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/OES_texture_float
-    DetectTextureFloat() {
-        if (this.renderer.capabilities.isWebGL2) {
-            return true;
-        } else {
-            return this.renderer.extensions.get("OES_texture_float");
-        }
-    }
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/OES_texture_half_float
-    DetectTextureHalfFloat() {
-        if (this.renderer.capabilities.isWebGL2) {
-            return true;
-        } else {
-            return this.renderer.extensions.get("OES_texture_half_float");
         }
     }
 
