@@ -104,6 +104,7 @@ export class ReactionDiffusionRenderer {
         //Make plane primitive
         let displayGeometry = new THREE.PlaneBufferGeometry(1.0, 1.0);
         this.displayMesh = new THREE.Mesh(displayGeometry, this.displayMaterial);
+        this.displayMesh.matrixAutoUpdate = false;
         this.scene.add(this.displayMesh);
 
         this.SetPreset("Coral");
