@@ -72,8 +72,8 @@ export class ReactionDiffusionRenderer {
 
         this.scene = new THREE.Scene();
         //Set up 1x1 orthographic camera looking along the negative z axis
-        this.camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 10, 100);
-        this.camera.position.z = 50; //Scoot backward 50 units
+        this.camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 1, 100);
+        this.camera.position.z = 10; //Scoot backward some arbitrary amount to fit in camera near/far range
 
         //Make plane primitive
         let displayGeometry = new THREE.PlaneBufferGeometry(1.0, 1.0);
