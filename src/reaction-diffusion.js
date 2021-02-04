@@ -120,6 +120,7 @@ export class ReactionDiffusion {
     }
 
     OnTouchStart(event) {
+        event.returnValue = false; // Prevent touch-and-hold gesture on iOS, probably Android
         if(!this.mouseIsDown){
             var rect = this.container.getBoundingClientRect();
             var touches = event.changedTouches;
