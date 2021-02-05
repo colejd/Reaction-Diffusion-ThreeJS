@@ -152,7 +152,7 @@ vec4 react(vec4 pixel, vec4 convolution) {
     float b = pixel.g;
     float c = pixel.b;
 
-    float reactionRate = a * b * b;
+    float reactionRate = a * (b * b);
 
     float du = da*convolution.r // Diffusion term
                 - reactionRate
