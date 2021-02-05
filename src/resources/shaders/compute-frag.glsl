@@ -10,6 +10,11 @@
 
 varying vec2 v_uv;
 
+varying vec2 left_coord;
+varying vec2 right_coord;
+varying vec2 top_coord;
+varying vec2 bottom_coord;
+
 uniform vec2 resolution;
 uniform vec2 texelSize;
 
@@ -57,13 +62,13 @@ float when_ge(float x, float y) {
 vec4 convolve5(vec4 centerPixel, vec3[3] kernel) {
     vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
 
-    result += texture2D( sourceTexture, v_uv + vec2( 0.0, texelSize.y ) ) * kernel[0][1];
-    result += texture2D( sourceTexture, v_uv + vec2( 0.0, -texelSize.y ) ) * kernel[2][1];
-    result += texture2D( sourceTexture, v_uv + vec2( texelSize.x, 0.0 ) ) * kernel[1][0];
-    result += texture2D( sourceTexture, v_uv + vec2( -texelSize.x, 0.0 ) ) * kernel[1][2];
-
-    // Center texel
+    //Center texel
     result += centerPixel * kernel[1][1];
+    //Orthogonal texels
+    result += texture2D(sourceTexture, bottom_coord) * kernel[2][1];
+    result += texture2D(sourceTexture, top_coord)    * kernel[0][1];
+    result += texture2D(sourceTexture, right_coord)  * kernel[1][2];
+    result += texture2D(sourceTexture, left_coord)   * kernel[1][0];
 
     return result;
 }
