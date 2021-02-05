@@ -42,7 +42,9 @@ export class ReactionDiffusion {
         // Add Stats module
         this.stats = new Stats();
         this.container.appendChild(this.stats.dom);
-        this.stats.dom.style.display = "none";
+
+        let showDebug = this.container.getAttribute("show-debug");
+        if (showDebug != "true") this.stats.dom.style.display = "none";
 
         // Set up clock for timing
         this.clock = new THREE.Clock();
