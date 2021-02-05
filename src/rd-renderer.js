@@ -177,13 +177,11 @@ export class ReactionDiffusionRenderer {
             this.computeUniforms.sourceTexture.value = this.computeRenderTargets[this.currentTargetIndex].texture; //Put current target texture into material
             this.renderer.setRenderTarget(this.computeRenderTargets[nextTargetIndex]);
             this.renderer.render(this.scene, this.camera); //Render the scene to next target
-            this.computeUniforms.sourceTexture.value = this.computeRenderTargets[nextTargetIndex].texture; //Put next target texture into material
-            this.displayMaterialUniforms.displayTexture.value = this.computeRenderTargets[nextTargetIndex].texture; //Assign to display material
-
             this.currentTargetIndex = nextTargetIndex;
         }
 
         //Set the display mesh to use the display material and render the final frame
+        this.displayMaterialUniforms.displayTexture.value = this.computeRenderTargets[this.currentTargetIndex].texture; //Assign to display material
         this.displayMesh.material = this.displayMaterial;
         this.renderer.setRenderTarget(null); // Set canvas as render target
         this.renderer.render(this.scene, this.camera);
