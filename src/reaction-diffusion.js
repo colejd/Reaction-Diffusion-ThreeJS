@@ -5,6 +5,8 @@ import Stats from "./vendor/stats.js";
 export class ReactionDiffusion {
     constructor(container) {
         this.container = container;
+        this.lastOffsetWidth = 0;
+        this.lastOffsetHeight = 0;
     }
 
     async Init() {
@@ -29,7 +31,11 @@ export class ReactionDiffusion {
         this.rdView.renderer.domElement.style.cursor = "default";
 
         window.addEventListener("resize", event => {
-            this.rdView.ReformRenderTargets(this.container.offsetWidth, this.container.offsetHeight);
+            if (this.container.offsetWidth != this.container.lastOffsetWidth || this.container.offsetHeight != this.container.lastOffsetHeight) {
+                this.rdView.ReformRenderTargets(this.container.offsetWidth, this.container.offsetHeight);
+                this.container.lastOffsetWidth = this.container.offsetWidth;
+                this.container.lastOffsetHeight = this.container.offsetHeight;
+            }
         });
 
         // Add Stats module
