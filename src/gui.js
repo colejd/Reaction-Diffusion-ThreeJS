@@ -44,6 +44,20 @@ class GUI {
         });
 
         this.panel.Register({
+            type: "range", label: "D_a",
+            min: 0.001, max: 1.0, step: 0.001,
+            object: rd.rdView.computeUniforms.da,
+            property: "value"
+        });
+
+        this.panel.Register({
+            type: "range", label: "D_b",
+            min: 0.001, max: 1.0, step: 0.001,
+            object: rd.rdView.computeUniforms.db,
+            property: "value"
+        });
+
+        this.panel.Register({
             type: "range", label: "Time Scale",
             min: 0, max: 1,
             object: rd.rdView.computeUniforms.timestep,

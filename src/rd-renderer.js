@@ -192,9 +192,9 @@ export class ReactionDiffusionRenderer {
     SetPreset(presetName) {
         this.selectedPreset = presetName;
         let preset = presets[presetName];
-        this.computeUniforms.feed.value = preset.feed;
-        this.computeUniforms.kill.value = preset.kill;
-        this.computeUniforms.biasStrength.value = preset.biasStrength;
+        Object.entries(preset).map(item => {
+            this.computeUniforms[item[0]].value = item[1];
+        })
     }
 
     Clear() {
