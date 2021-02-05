@@ -19,6 +19,11 @@ class GUI {
         });
 
         this.panel.Register({
+            type: 'title',
+            label: 'Parameters'
+        });
+
+        this.panel.Register({
             type: "select",
             label: "Preset",
             options: Object.getOwnPropertyNames(presets),
@@ -62,6 +67,11 @@ class GUI {
             min: 0, max: 1,
             object: rd.rdView.computeUniforms.timestep,
             property: "value"
+        });
+
+        this.panel.Register({
+            type: 'title',
+            label: 'Interaction'
         });
 
         this.panel.Register({
