@@ -234,9 +234,11 @@ export class ReactionDiffusionRenderer {
 
         this.renderer.setSize(width, height);
         this.displayMaterialUniforms.resolution.value = new THREE.Vector2(width, height);
+        this.displayMaterialUniforms.texelSize.value = new THREE.Vector2(1.0 / width, 1.0 / height);
         console.log(`Renderer resized to (${width}, ${height})`);
 
         let computeResolution = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
+        // Force size to be even so that resolutionMultiplier can't break things
         if (computeResolution.x % 2 != 0) computeResolution.x -= 1;
         if (computeResolution.y % 2 != 0) computeResolution.y -= 1;
 
@@ -275,6 +277,10 @@ export class ReactionDiffusionRenderer {
     CreateMaterials() {
         this.displayMaterialUniforms = {
             resolution: {
+                type: "v2",
+                value: new THREE.Vector2()
+            },
+            texelSize: {
                 type: "v2",
                 value: new THREE.Vector2()
             },

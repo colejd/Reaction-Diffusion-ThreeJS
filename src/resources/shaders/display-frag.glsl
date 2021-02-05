@@ -11,6 +11,7 @@ varying vec2 v_uv;
 
 uniform sampler2D displayTexture;
 uniform vec2 resolution;
+uniform vec2 texelSize;
 
 float rando(vec2 co){
   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
@@ -55,7 +56,6 @@ float when_ge(float x, float y) {
 }
 
 void main() {
-    vec2 texelSize = 1.0 / resolution.xy;
     vec2 uv = v_uv;
     vec4 pixel = texture2D( displayTexture, uv );
     bool useHighPass = false;
