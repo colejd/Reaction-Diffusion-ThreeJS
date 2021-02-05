@@ -166,10 +166,6 @@ export class ReactionDiffusionRenderer {
             this.resize = null;
         }
 
-        //Update uniforms
-        this.displayMaterialUniforms.time.value = 60.0 * clock.getElapsedTime();
-        this.computeUniforms.time.value = 60.0 * clock.getElapsedTime();
-
         //Set the display mesh to use the compute shader
         this.displayMesh.material = this.computeMaterial;
 
@@ -278,10 +274,6 @@ export class ReactionDiffusionRenderer {
 
     CreateMaterials() {
         this.displayMaterialUniforms = {
-            time: {
-                type: "f",
-                value: 1.0
-            },
             resolution: {
                 type: "v2",
                 value: new THREE.Vector2()
@@ -310,10 +302,6 @@ export class ReactionDiffusionRenderer {
             texelSize: {
                 type: "v2",
                 value: new THREE.Vector2()
-            },
-            time: {
-                type: "f",
-                value: 1.0
             },
             feed: {
                 type: "f",

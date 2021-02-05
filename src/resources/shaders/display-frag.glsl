@@ -10,7 +10,6 @@
 varying vec2 v_uv;
 
 uniform sampler2D displayTexture;
-uniform float time;
 uniform vec2 resolution;
 
 float rando(vec2 co){

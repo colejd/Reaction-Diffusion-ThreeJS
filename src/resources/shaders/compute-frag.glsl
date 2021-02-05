@@ -19,7 +19,6 @@ uniform vec2 resolution;
 uniform vec2 texelSize;
 
 uniform sampler2D sourceTexture;
-uniform float time;
 
 uniform float feed; // Growth rate for B
 uniform float kill; // Kill rate for B
