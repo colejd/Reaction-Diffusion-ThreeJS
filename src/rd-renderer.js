@@ -22,6 +22,8 @@ export class ReactionDiffusionRenderer {
         this.currentTargetIndex = 0;
         this.imageType = THREE.FloatType;
 
+        this.resize = null;
+
     }
 
     async Init(width, height, optionalParams) {
@@ -157,6 +159,11 @@ export class ReactionDiffusionRenderer {
     }
 
     Render(clock) {
+        if (this.resize) {
+            this.ReformRenderTargets(this.resize.x,  this.resize.y);
+            this.resize = null;
+        }
+
         //Update uniforms
         this.displayMaterialUniforms.time.value = 60.0 * clock.getElapsedTime();
         this.computeUniforms.time.value = 60.0 * clock.getElapsedTime();
@@ -220,38 +227,50 @@ export class ReactionDiffusionRenderer {
     }
 
     ReformRenderTargets(width, height) {
+        console.log("Reforming render targets...");
 
-        this.computeRenderTargets = null; // Force the elements to delete
-        this.computeRenderTargets = [];
+        // Force size to be even so that resolutionMultiplier can't break things
+        if (width % 2 != 0) width -= 1;
+        if (height % 2 != 0) height -= 1;
 
         this.renderer.setSize(width, height);
-        //console.log("Renderer resized to (" + width + ", " + height + ")");
+        this.displayMaterialUniforms.resolution.value = new THREE.Vector2(width, height);
+        console.log(`Renderer resized to (${width}, ${height})`);
+
+        let computeResolution = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
+        if (computeResolution.x % 2 != 0) computeResolution.x -= 1;
+        if (computeResolution.y % 2 != 0) computeResolution.y -= 1;
+
+        this.computeUniforms.resolution.value = computeResolution;
+        console.log(`Compute texture sized to (${computeResolution.x}, ${computeResolution.y})`);
+        //console.log(`Compute texture sized to (${this.computeUniforms.resolution.value.x}, ${this.computeUniforms.resolution.value.y})`);
+
+        // Determine texel size (size of a pixel when resolution is normalized between 0 and 1)
+        let texelSize = new THREE.Vector2(1.0 / computeResolution.width, 1.0 / computeResolution.height);
+        this.computeUniforms.texelSize.value = texelSize;
 
         // Make the two render targets
-        for(let i = 0; i < 2; i++){
-            let newTarget = new THREE.WebGLRenderTarget(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier, {
+        for (let i = 0; i < 2; i++) {
+            // this.computeRenderTargets[i] = null;
+            let newTarget = new THREE.WebGLRenderTarget(computeResolution.x, computeResolution.y, {
+                wrapS: THREE.RepeatWrapping,
+                wrapT: THREE.RepeatWrapping,
                 minFilter: this.filterType,
                 magFilter: this.filterType,
                 format: THREE.RGBAFormat,
-                type: this.imageType
+                type: this.imageType,
+                depthBuffer: false
             });
-            newTarget.texture.wrapS = THREE.RepeatWrapping;//THREE.RepeatWrapping;
-            newTarget.texture.wrapT = THREE.RepeatWrapping;//THREE.RepeatWrapping;
             newTarget.texture.name = `render texture ${i}`;
-            this.computeRenderTargets.push(newTarget);
+
+            if (this.computeRenderTargets[this.currentTargetIndex]) {
+                this.ApplyFunctionToRenderTarget(newTarget, this.SeedInitial);
+                this.ResizeRenderTargetIntoNewRenderTarget(this.computeRenderTargets[this.currentTargetIndex], newTarget);
+            }
+            this.computeRenderTargets[i] = newTarget;
         }
 
-        // Determine actual resolution
-        let realResolution = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
-        // Determine texel size (size of a pixel when resolution is normalized between 0 and 1)
-        let texelSize = new THREE.Vector2(1.0 / realResolution.width, 1.0 / realResolution.height);
-
-        this.displayMaterialUniforms.resolution.value = realResolution;
-        console.log(`Display texture sized to (${this.displayMaterialUniforms.resolution.value.x}, ${this.displayMaterialUniforms.resolution.value.y})`);
-
-        this.computeUniforms.resolution.value = realResolution;
-        this.computeUniforms.texelSize.value = texelSize;
-        //console.log(`Compute texture sized to (${this.computeUniforms.resolution.value.x}, ${this.computeUniforms.resolution.value.y})`);
+        console.log("Done reforming render targets.");
     }
 
     CreateMaterials() {
@@ -351,6 +370,47 @@ export class ReactionDiffusionRenderer {
         this.passThroughMaterial.blending = THREE.NoBlending;
     }
 
+    ResizeRenderTargetIntoNewRenderTarget(oldTarget, newTarget) {
+
+        // Bail if the new size is the same as the old size
+        if (oldTarget.width == newTarget.width && oldTarget.height == newTarget.height) return;
+
+        console.log(`Resizing target from (${oldTarget.width}, ${oldTarget.height}) to (${newTarget.width}, ${newTarget.height})`)
+
+        //Read oldTarget into a DataTexture
+        var oldBuffer = new Float32Array(oldTarget.width * oldTarget.height * 4);
+        this.renderer.readRenderTargetPixels(oldTarget, 0, 0, oldTarget.width, oldTarget.height, oldBuffer);
+
+        //Read newTarget into a DataTexture
+        var newBuffer = new Float32Array(newTarget.width * newTarget.height * 4);
+        this.renderer.readRenderTargetPixels(newTarget, 0, 0, newTarget.width, newTarget.height, newBuffer);
+
+        const componentSize = 4;
+
+        for (var y = 0; y < oldTarget.height; y++) {
+            for (var x = 0; x < oldTarget.width; x++) {
+                var coordInNewBuffer = (x * componentSize) + ((newTarget.width * componentSize) * y);
+                var coordInOldBuffer = (x * componentSize) + ((oldTarget.width * componentSize) * y);
+                // if (x < 4 && y < 10) console.log(`(${x}, ${y}) -> old: ${coordInOldBuffer}, new: ${coordInNewBuffer}`);
+                newBuffer[coordInNewBuffer + 0] = oldBuffer[coordInOldBuffer + 0];
+                newBuffer[coordInNewBuffer + 1] = oldBuffer[coordInOldBuffer + 1];
+            }
+        }
+
+        var texture = new THREE.DataTexture(newBuffer, newTarget.width, newTarget.height, THREE.RGBAFormat, THREE.FloatType);
+        // texture.needsUpdate = true;
+
+        //Render DataTexture into renderTarget
+        this.passThroughUniforms.tex.value = texture;
+
+        this.displayMesh.material = this.passThroughMaterial;
+        this.renderer.setRenderTarget(newTarget);
+        this.renderer.render(this.scene, this.camera);
+
+        // Clean up
+        this.passThroughUniforms.tex.value = null;
+    }
+
     ApplyFunctionToRenderTarget(renderTarget, callback) {
         //Read renderTarget into a DataTexture
         var buffer = new Float32Array(renderTarget.width * renderTarget.height * 4);
@@ -370,6 +430,7 @@ export class ReactionDiffusionRenderer {
         // this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
         //displayMesh.material = oldMaterial;
+        this.passThroughUniforms.tex.value = null;
 
         var gl = this.renderer.getContext();
         var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
