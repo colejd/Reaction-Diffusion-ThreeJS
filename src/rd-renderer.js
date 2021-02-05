@@ -18,7 +18,7 @@ export class ReactionDiffusionRenderer {
         this.internalResolutionMultiplier = 0.5;
 
         this.computeRenderTargets = [];
-        this.computeStepsPerFrame = 16;
+        this.computeStepsPerFrame = 12;
         this.currentTargetIndex = 0;
         this.imageType = THREE.FloatType;
 
