@@ -44,13 +44,6 @@ class GUI {
         });
 
         this.panel.Register({
-            type: "range", label: "Steps Per Frame",
-            min: 0, max: 50, step: 1,
-            object: rd.rdView,
-            property: "computeStepsPerFrame"
-        });
-
-        this.panel.Register({
             type: "range", label: "Time Scale",
             min: 0, max: 1,
             object: rd.rdView.computeUniforms.timestep,
@@ -64,9 +57,18 @@ class GUI {
             property: "value"
         });
 
+
+        this.panel.Register({
+            type: 'select',
+            label: 'Reseed Method',
+            object: rd.rdView,
+            property: 'seedType',
+            options: ['Circle', 'Noise']
+        })
+
         this.panel.Register({
             type: "button",
-            label: "Reset",
+            label: "Reseed",
             action: () => rd.rdView.Reset()
         });
 
@@ -93,9 +95,16 @@ class GUI {
             }
         });
 
+        this.panel.Register({
+            type: "range", label: "Steps Per Frame",
+            folder: "Advanced",
+            min: 0, max: 50, step: 1,
+            object: rd.rdView,
+            property: "computeStepsPerFrame"
+        });
 
         this.panel.Register({
-            type: "button", label: "Show/Hide FPS",
+            type: "button", label: "Toggle FPS",
             folder: "Advanced",
             action: () => rd.ToggleDebug()
         })

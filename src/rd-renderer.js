@@ -24,6 +24,7 @@ export class ReactionDiffusionRenderer {
 
         this.resize = null;
 
+        this.seedType = "Circle";
     }
 
     async Init(width, height, optionalParams) {
@@ -214,11 +215,12 @@ export class ReactionDiffusionRenderer {
             //Add some bias in the center
             //this.SeedFilledCircle(texture, sizeX * 0.5, sizeY * 0.5, Math.min(sizeX, sizeY) * 0.25, 2);
 
-            if (this.seedFrequency != null) {
+            if (this.seedFrequency != null || this.seedType == "Noise") {
                 this.SeedNoise(texture);
-            }
-            else {
+            } else if (this.seedType == "Circle") {
                 this.SeedFilledCircle(texture, sizeX * 0.5, sizeY * 0.5, 5.0);
+            } else {
+                throw new Error(`Invalid seedType specified: ${this.seedType}`);
             }
         }
         this.ApplyFunctionToRenderTarget(this.computeRenderTargets[0], Seed);
