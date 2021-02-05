@@ -22,6 +22,7 @@ export class ReactionDiffusionRenderer {
         this.currentTargetIndex = 0;
         this.imageType = THREE.FloatType;
 
+        // If this is set to a Vector2, the simulation will be resized to the given dimensions on the next frame.
         this.resize = null;
 
         this.seedType = "Circle";
