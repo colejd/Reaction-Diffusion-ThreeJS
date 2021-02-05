@@ -18,7 +18,7 @@ void main() {
 
     // Compute coordinates of neighbor texels here to save on perf
     // (If many pixels correspond to one texel we save on texture reads)
-    //Orthogonal texels
+    // Orthogonal texels
     bottom_coord = uv + vec2( 0.0, texelSize.y );
     top_coord = uv + vec2( 0.0, -texelSize.y );
     right_coord = uv + vec2( texelSize.x, 0.0 );
