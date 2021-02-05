@@ -36,9 +36,10 @@ export class ReactionDiffusionRenderer {
 
         this.renderer = new THREE.WebGLRenderer({
             premultipliedAlpha: false,
-            preserveDrawingBuffer: true,
+            preserveDrawingBuffer: false,
             powerPreference: "high-performance"
         });
+
 
         // Check for WebGL support needed for the program to run
         if (this.renderer.capabilities.maxVertexTextures === 0) {
