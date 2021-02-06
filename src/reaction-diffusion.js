@@ -44,18 +44,14 @@ export class ReactionDiffusion {
             }, 100);
         }
 
-        // Add Stats module
-        this.stats = new Stats();
-        this.container.appendChild(this.stats.dom);
-
-        let showDebug = this.container.getAttribute("show-debug");
-        if (showDebug != "true") this.stats.dom.style.display = "none";
+        if (this.container.getAttribute("show-debug") == "true") {
+            // Add Stats module
+            this.stats = new Stats();
+            this.container.appendChild(this.stats.dom);
+        }
 
         // Set up clock for timing
         this.clock = new THREE.Clock();
-
-
-
 
         // Call last
         this.RenderLoop();
@@ -65,7 +61,7 @@ export class ReactionDiffusion {
 
         this.rdView.Render(this.clock);
 
-        this.stats.update();
+        if (this.stats) this.stats.update();
 
         // TODO: Add info block https://threejs.org/docs/#api/en/renderers/WebGLRenderer.info
 
@@ -73,7 +69,11 @@ export class ReactionDiffusion {
     }
 
     ToggleDebug() {
-        this.stats.dom.style.display = this.stats.dom.style.display == "none" ? "block" : "none";
+        if (!this.stats) {
+            this.stats = new Stats();
+            this.container.appendChild(this.stats.dom);
+        }
+        this.stats.dom.style.display = this.stats.dom.style.display == "none" ? "initial" : "none";
     }
 
     // Gives a dictionary holding the optional attributes a user might add
