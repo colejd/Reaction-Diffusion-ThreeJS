@@ -7,6 +7,8 @@ export class ReactionDiffusion {
         this.container = container;
         this.lastOffsetWidth = this.container.offsetWidth;
         this.lastOffsetHeight = this.container.offsetHeight;
+
+        this.resizeTimer = null;
     }
 
     async Init() {
@@ -30,14 +32,17 @@ export class ReactionDiffusion {
         // Set the default cursor for the renderer element
         this.rdView.renderer.domElement.style.cursor = "default";
 
-        window.addEventListener("resize", event => {
-            if (this.container.offsetWidth != this.container.lastOffsetWidth || this.container.offsetHeight != this.container.lastOffsetHeight) {
-                // this.rdView.ReformRenderTargets(this.container.offsetWidth, this.container.offsetHeight);
-                this.rdView.resize = new THREE.Vector2(this.container.offsetWidth, this.container.offsetHeight);
-                this.container.lastOffsetWidth = this.container.offsetWidth;
-                this.container.lastOffsetHeight = this.container.offsetHeight;
-            }
-        });
+        // Listen for resize events (only fire when resizing hasn't occurred for 100ms after first resize fired)
+        window.onresize = () => {
+            clearTimeout(this.resizeTimer);
+            this.resizeTimer = setTimeout(() => {
+                console.log("Window was resized!");
+                this.rdView.ReformRenderTargets(this.container.offsetWidth, this.container.offsetHeight);
+                // this.rdView.resize = new THREE.Vector2(this.container.offsetWidth, this.container.offsetHeight);
+                this.lastOffsetWidth = this.container.offsetWidth;
+                this.lastOffsetHeight = this.container.offsetHeight;
+            }, 100);
+        }
 
         // Add Stats module
         this.stats = new Stats();
@@ -61,6 +66,8 @@ export class ReactionDiffusion {
         this.rdView.Render(this.clock);
 
         this.stats.update();
+
+        // TODO: Add info block https://threejs.org/docs/#api/en/renderers/WebGLRenderer.info
 
         requestAnimationFrame( this.RenderLoop.bind(this) );
     }

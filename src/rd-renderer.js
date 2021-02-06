@@ -95,7 +95,7 @@ export class ReactionDiffusionRenderer {
             }
         }
 
-        this.renderer.setSize(width, height);
+        this.renderer.setSize(width, height, false);
         this.renderer.setClearColor(0x00ffff, 1); //Cyan clear color
         this.renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -183,7 +183,7 @@ export class ReactionDiffusionRenderer {
         //Set the display mesh to use the display material and render the final frame
         this.displayMaterialUniforms.displayTexture.value = this.computeRenderTargets[this.currentTargetIndex].texture; //Assign to display material
         this.displayMesh.material = this.displayMaterial;
-        this.renderer.setRenderTarget(null); // Set canvas as render target
+        this.renderer.setRenderTarget(null); // Set canvas as render target (TODO: this is the slow part!!!)
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -226,23 +226,28 @@ export class ReactionDiffusionRenderer {
     ReformRenderTargets(width, height) {
         console.log("Reforming render targets...");
 
-        // Force size to be even so that resolutionMultiplier can't break things
-        if (width % 2 != 0) width -= 1;
-        if (height % 2 != 0) height -= 1;
+        // Set up display shader
 
-        this.renderer.setSize(width, height);
-        this.displayMaterialUniforms.resolution.value = new THREE.Vector2(width, height);
-        this.displayMaterialUniforms.texelSize.value = new THREE.Vector2(1.0 / width, 1.0 / height);
-        console.log(`Renderer resized to (${width}, ${height})`);
-
-        let computeResolution = new THREE.Vector2(width * this.internalResolutionMultiplier, height * this.internalResolutionMultiplier);
+        let displayResolution = new THREE.Vector2(Math.floor(width * this.internalResolutionMultiplier), Math.floor(height * this.internalResolutionMultiplier));
         // Force size to be even so that resolutionMultiplier can't break things
-        if (computeResolution.x % 2 != 0) computeResolution.x -= 1;
-        if (computeResolution.y % 2 != 0) computeResolution.y -= 1;
+        // if (displayResolution.width % 2 != 0) displayResolution.width -= 1;
+        // if (displayResolution.height % 2 != 0) displayResolution.height -= 1;
+
+        this.renderer.setSize(displayResolution.width, displayResolution.height, false);
+
+        this.displayMaterialUniforms.resolution.value = new THREE.Vector2(displayResolution.width, displayResolution.height);
+        this.displayMaterialUniforms.texelSize.value = new THREE.Vector2(1.0 / displayResolution.width, 1.0 / displayResolution.height);
+        console.log(`Display texture resized to (${displayResolution.width}, ${displayResolution.height})`);
+
+        // Set up compute shader
+
+        let computeResolution = new THREE.Vector2(Math.floor(width * this.internalResolutionMultiplier), Math.floor(height * this.internalResolutionMultiplier));
+        // Force size to be even so that resolutionMultiplier can't break things
+        // if (computeResolution.x % 2 != 0) computeResolution.x -= 1;
+        // if (computeResolution.y % 2 != 0) computeResolution.y -= 1;
 
         this.computeUniforms.resolution.value = computeResolution;
         console.log(`Compute texture sized to (${computeResolution.x}, ${computeResolution.y})`);
-        //console.log(`Compute texture sized to (${this.computeUniforms.resolution.value.x}, ${this.computeUniforms.resolution.value.y})`);
 
         // Determine texel size (size of a pixel when resolution is normalized between 0 and 1)
         let texelSize = new THREE.Vector2(1.0 / computeResolution.width, 1.0 / computeResolution.height);
