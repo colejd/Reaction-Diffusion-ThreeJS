@@ -93,5 +93,13 @@
         "biasStrength":0,
         "da": 0.2097,
         "db": 0.105
+    },
+
+    "Lava Lamp": {
+        "feed":0.01,
+        "kill":0.051,
+        "biasStrength":0,
+        "da": 0.237,
+        "db": 0.109
     }
 }
