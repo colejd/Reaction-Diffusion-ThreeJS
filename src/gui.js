@@ -26,7 +26,7 @@ class GUI {
         this.panel.Register({
             type: "select",
             label: "Preset",
-            options: Object.getOwnPropertyNames(presets),
+            options: Object.getOwnPropertyNames(presets).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
             initial: rd.rdView.selectedPreset,
             onChange: (name) => {
                 rd.rdView.SetPreset(name);
